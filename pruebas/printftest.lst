@@ -1,0 +1,63 @@
+
+as12, an absolute assembler for Motorola MCU's, version 1.2h
+
+000d                    CR:                EQU $0D
+000a                    LF:                EQU $0A
+ee88                    printf:            EQU $EE88
+ee84                    getchar:           EQU $EE84
+ee86                    putchar:           EQU $EE86
+0000                    FINMSG:            EQU $0
+                        
+1000                                    org $1000
+1000 49 6e 67 72 65 73  MSG1:                FCC "Ingrese un valor entre 0 y9: "
+     65 20 75 6e 20 76
+     61 6c 6f 72 20 65
+     6e 74 72 65 20 30
+     20 79 39 3a 20
+101d 0d 0d 0a                           dB CR,CR,LF
+1020 00                                 dB FINMSG
+                        
+1021 45 6c 20 2d 76 61  MSG2:                FCC "El -valor ingresado en Hex es %x"
+     6c 6f 72 20 69 6e
+     67 72 65 73 61 64
+     6f 20 65 6e 20 48
+     65 78 20 65 73 20
+     25 78
+1041 0d 0d 0a                           dB CR,CR,LF
+1044 00                                 dB FINMSG
+                                        
+1045 45 6c 20 6e 75 6d  MSG3:           FCC "El numero ingresado fue:"
+     65 72 6f 20 69 6e
+     67 72 65 73 61 64
+     6f 20 66 75 65 3a
+105d 0d 0d 0a                           dB CR,CR,LF
+1060 00                                 dB FINMSG
+                        ;Programa
+                        
+2000                                    org $2000
+2000 cf 3b ff                           lds #$3BFF
+2003 ce 00 00                           ldx #$0
+2006 cc 10 00                           ldd #MSG1
+2009 15 e3 ee 88                        jsr [printf,x]
+                        
+200d ce 00 00                           ldx #$0
+2010 15 e3 ee 84                        jsr [getchar,x]
+                        
+                                        ;ldaa #$0
+                                        ;ldx #$0
+                                        ;jsr [putchar,x]
+                        
+2014 c0 30                              subb #$30
+2016 50                                 negb
+2017 b7 14                              sex b,d
+                        
+2019 3b                                 pshd
+201a ce 00 00                           ldx #$0000
+201d cc 10 21                           ldd #MSG2
+2020 15 e3 ee 88                        jsr [printf,x]
+                        
+2024 20 fe              END:                bra END
+
+Executed: Thu Oct 05 22:14:00 2023
+Total cycles: 33, Total bytes: 135
+Total errors: 0, Total warnings: 0

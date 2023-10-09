@@ -1,0 +1,10 @@
+cr         000d
+end        2024
+finmsg     0000
+getchar    ee84
+lf         000a
+msg1       1000
+msg2       1021
+msg3       1045
+printf     ee88
+putchar    ee86

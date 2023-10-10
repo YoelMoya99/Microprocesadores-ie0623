@@ -1,19 +1,23 @@
 ;----------------- ENCABEZADO ----------------------------;
 
 ;----------------- ESTRUCTURAS DE DATOS ------------------;
-CR:                EQU $0D
-LF:                EQU $0A
-PrintF:                EQU $EE88
+CR:             EQU $0D
+LF:             EQU $0A
+PrintF:         EQU $EE88
 GetChar:        EQU $EE84
 PutChar:        EQU $EE86
-FINMSG:                EQU $0
+FINMSG:         EQU $0
 
                 org $1000
 CANT:           ds 1
-CONT:                ds 1
-Offset:                ds 1
-ACC:                ds 2
+CONT:           ds 1
+Offset:         ds 1
+ACC:            ds 2
 
+		org $1010
+Nibble_UP:	ds 2
+Nibble_MED:	ds 2
+Nibble_LOW:	ds 2
 
                 org $1030
 MSG_INICIAL:    FCC "INGRESE EL VALOR DE CANT (ENTRE 1 Y 25): "
@@ -25,7 +29,7 @@ MSG_ENTER:      FCC " "
 
 
                 org $1500
-Datos_IoT:        fcc "0129"
+Datos_IoT:      fcc "0129"
                 fcc "0749"
                 fcc "3854"
                 fcc "1975"
@@ -51,12 +55,19 @@ Datos_IoT:        fcc "0129"
 
 
                 org $1600
-Datos_BIN:        ds 25
+Datos_BIN:      ds 25
 
 ;----------------- PROGRAMA PRINCIPAL --------------------;
 
                 org $2000
                 lds #$3BFF
+		ldd #$1630
+		std Nibble_UP
+		ldd #$1660
+		std Nibble_MED
+		ldd #$1690
+		std Nibble_LOW
+
 
                 jsr GET_CANT
 
@@ -74,8 +85,65 @@ Datos_BIN:        ds 25
                 leas 7,sp
                 jsr ASCII_BIN                
 
+		ldx #Datos_BIN
+		jsr MOVER
+
                 bra *
 
+
+
+;---------------------------------------------------------;
+;----------------- SUBRUTINA MOVER -----------------------;
+;---------------------------------------------------------;
+
+MOVER:
+		pshx
+		ldab #$00
+		pshb
+
+mover_loop:	leas 1,sp
+		pulx
+
+		ldd 2,x+
+		pshx
+
+		leas -1,sp
+		tfr d,y
+
+		anda #$0F
+		pulb
+		ldx Nibble_UP
+		staa b,x
+
+		pshb
+		tfr y,d
+		
+		andb #$0F
+		pula
+		ldx Nibble_LOW
+		stab a,x
+
+		psha
+		tfr y,d
+
+		lsrb
+		lsrb
+		lsrb
+		lsrb
+
+		pula
+		ldx Nibble_MED
+		stb a,x
+
+		adda #$01
+		psha
+
+		cmpa CANT
+		bne mover_loop
+
+		leas 3,sp
+
+		rts
 
 
 ;---------------------------------------------------------;

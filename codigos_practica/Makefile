@@ -1,4 +1,4 @@
-asmfiles = YoelMoya_T3.asm
+asmfiles = YoelMoya_T3.asm dfct3.asm
 
 all:
 

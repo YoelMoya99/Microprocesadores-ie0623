@@ -163,7 +163,7 @@ Tarea_Teclado:
 ;------------------------------ Teclado Est1 ---------------------------------
 
 Teclado_Est1:           bclr PORTB,$6E
-			bset PORTB,$02 ;Comprobacionestado1
+                        bset PORTB,$02 ;Comprobacionestado1
                         jsr Leer_Teclado
                         
                         ldaa #$FF
@@ -220,10 +220,10 @@ Fin_Teclado_Est3:        rts
 ;---------------------------- Teclado Est 4 --------------------------------
 
 Teclado_Est4:           bclr PORTB,$6E
-			bset PORTB,$10 ;Hecho para ver transicino de estados
+                        bset PORTB,$10 ;Hecho para ver transicino de estados
                         ldaa Cont_TCL
                         cmpa MAX_TCL
-                        bhi Long_Max
+                        bhs Long_Max
 
 No_Long_Max:            tst Cont_TCL
                         beq Array_Zero

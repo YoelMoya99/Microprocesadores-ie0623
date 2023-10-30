@@ -50,7 +50,7 @@ MaskPB            EQU $01
                                 Org $1000
 
 ;Aqui se colocan las estructuras de datos de la aplicacion
-MAX_TCL:          dB $05       ;Valor maximo del arreglo (1-6)
+MAX_TCL:          dB $06       ;Valor maximo del arreglo (1-6)
 Tecla:            ds 1         ;Variable retorno de sr Leer Teclado
 Tecla_IN:         ds 1         ;Variable temp para validez de tecla pulsada
 Cont_TCL:         ds 1         ;Offset del arreglo resultado
@@ -173,9 +173,7 @@ Tarea_Teclado:
 
 ;------------------------------ Teclado Est1 ---------------------------------
 
-Teclado_Est1:           bclr PORTB,$6E
-                        bset PORTB,$02
-                        jsr Leer_Teclado
+Teclado_Est1:           jsr Leer_Teclado
                         
                         ldaa #$FF            ;Revisa si tecla pulsada es valida
                         cmpa Tecla           ;y si lo es:
@@ -189,9 +187,7 @@ Fin_Teclado_Est1:        rts
 
 ;---------------------------- Teclado Est2 -----------------------------------
 
-Teclado_Est2:           bclr PORTB,$6E
-                        bset PORTB,$04
-                        tst Timer_RebTCL     ;Revisa si la sup de rebotes ya
+Teclado_Est2:           tst Timer_RebTCL     ;Revisa si la sup de rebotes ya
                         bne Fin_Teclado_Est2 ;Termino.
 
                         jsr Leer_Teclado
@@ -206,14 +202,12 @@ Teclado_Est2:           bclr PORTB,$6E
 Next_TCL_Est_3:
                         movw #Teclado_Est3,Est_Pres_TCL ;Si es la misma pasa
                                                         ;de estado
-Fin_Teclado_Est2:        rts
+Fin_Teclado_Est2:       rts
 
 
 ;--------------------------- Teclado Est 3 ----------------------------------
 
-Teclado_Est3:           bclr PORTB,$6E
-                        bset PORTB,$08
-                        jsr Leer_Teclado
+Teclado_Est3:           jsr Leer_Teclado
                         
                         ldaa Tecla_IN ;utiliza tecla presionada en estado1
                         cmpa Tecla    ;para ver si sigue presionada
@@ -230,9 +224,7 @@ Fin_Teclado_Est3:        rts
 
 ;---------------------------- Teclado Est 4 --------------------------------
 
-Teclado_Est4:           bclr PORTB,$6E
-                        bset PORTB,$10
-                        ldaa Cont_TCL ;Revisa si ya se llego al valor maximo
+Teclado_Est4:           ldaa Cont_TCL ;Revisa si ya se llego al valor maximo
                         cmpa MAX_TCL  ;de datos ingresados.
                         bhs Long_Max
 

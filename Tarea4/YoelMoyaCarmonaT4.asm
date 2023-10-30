@@ -50,7 +50,7 @@ MaskPB            EQU $01
                                 Org $1000
 
 ;Aqui se colocan las estructuras de datos de la aplicacion
-MAX_TCL:          dB $04       ;Valor maximo del arreglo (1-6)
+MAX_TCL:          dB $05       ;Valor maximo del arreglo (1-6)
 Tecla:            ds 1         ;Variable retorno de sr Leer Teclado
 Tecla_IN:         ds 1         ;Variable temp para validez de tecla pulsada
 Cont_TCL:         ds 1         ;Offset del arreglo resultado
@@ -356,9 +356,32 @@ PBest4_State1:          movw #LeerPB_Est1,Est_Pres_LeerPB
 
 PBEst4_Retornar:        rts
 
+;*****************************************************************************
+;                TAREA BORRA TCL (anterior TAREA LED PB)
+;*****************************************************************************
+
+Tarea_Borra_TCL:
+                        BrSet Banderas,ShortP,ON
+                        BrSet Banderas,LongP,OFF
+                        Bra FIN_Led
+ON:                     BClr Banderas,ShortP
+                        Bset PORTB,$01
+                        Bra FIN_Led
+OFF:                    BClr Banderas,LongP
+                        BClr PORTB,$01
+                        
+                        ldx #Num_Array      ;se utiliza el mismo ciclo
+                        movb #$09,Cont_TCL  ;implementado en el main, para
+forCLR:                 movb #$FF,1,x+      ;limpiar el arreglo. Y se agrega
+                        dec Cont_TCL        ;poner la bandera array en cero.
+                        bne forCLR
+                        movb #$00,Cont_TCL
+                        bclr Banderas,ARRAY_OK
+
+FIN_Led:                Rts
 
 ;*****************************************************************************
-;                      SUB RUTINA GENERAL LEER TECLADO
+;                  SUB RUTINA GENERAL LEER TECLADO
 ;*****************************************************************************
 
 Leer_Teclado:
@@ -400,31 +423,8 @@ No_Valor:
 
 End_Leer_Teclado:        rts
 
-;*****************************************************************************
-;                              TAREA BORRA TCL (TAREA LED PB)
-;*****************************************************************************
-
-Tarea_Borra_TCL:
-                        BrSet Banderas,ShortP,ON
-                        BrSet Banderas,LongP,OFF
-                        Bra FIN_Led
-ON:                     BClr Banderas,ShortP
-                        Bset PORTB,$01
-                        Bra FIN_Led
-OFF:                    BClr Banderas,LongP
-                        BClr PORTB,$01
-                        
-                        ldx #Num_Array      ;se utiliza el mismo ciclo
-                        movb #$09,Cont_TCL  ;implementado en el main, para
-forCLR:                 movb #$FF,1,x+      ;limpiar el arreglo. Y se agrega
-                        dec Cont_TCL        ;poner la bandera array en cero.
-                        bne forCLR
-                        movb #$00,Cont_TCL
-                        bclr Banderas,ARRAY_OK
-
-FIN_Led:                Rts
 ;******************************************************************************
-;                               TAREA LED TESTIGO
+;                        TAREA LED TESTIGO
 ;******************************************************************************
 
 Tarea_Led_Testigo
@@ -441,8 +441,7 @@ FinLedTest      Rts
 ;******************************************************************************
 
 Maquina_Tiempos:
-               ;{COLOCAR EL CODIGO DE LA SUBRUTINA QUE IMPLEMENTA LA
-               ; MAQUINA DE TIEMPOS }
+               ;MAQUINA DE TIEMPOS
                ldx #Tabla_Timers_BaseT
                
                jsr Decre_Timers

@@ -101,7 +101,7 @@ Fin_Base1S        dB $FF
 
                                Org $2000
 
-        Bset DDRB,$81     ;Habilitacion del LED Testigo cambioxxxx 80
+        Bset DDRB,$FF     ;Habilitacion del LED Testigo cambioxxxx 80
         Bset DDRJ,$02     ;como comprobacion del timer de 1 segundo
         BClr PTJ,$02      ;haciendo toogle
         
@@ -162,7 +162,8 @@ Tarea_Teclado:
 
 ;------------------------------ Teclado Est1 ---------------------------------
 
-Teclado_Est1:           ;movb #$02,PORTB ;Comprobacionestado1
+Teclado_Est1:           bclr PORTB,$6E
+			bset PORTB,$02 ;Comprobacionestado1
                         jsr Leer_Teclado
                         
                         ldaa #$FF
@@ -177,7 +178,8 @@ Fin_Teclado_Est1:        rts
 
 ;---------------------------- Teclado Est2 -----------------------------------
 
-Teclado_Est2:           ;movb #$04,PORTB ;Comprobacion estado2
+Teclado_Est2:           bclr PORTB,$6E ;Comprobacion estado2
+                        bset PORTB,$04
                         tst Timer_RebTCL
                         bne Fin_Teclado_Est2
 
@@ -198,7 +200,8 @@ Fin_Teclado_Est2:        rts
 
 ;--------------------------- Teclado Est 3 ----------------------------------
 
-Teclado_Est3:           ;movb #$08,PORTB
+Teclado_Est3:           bclr PORTB,$6E
+                        bset PORTB,$08
                         jsr Leer_Teclado
                         
                         ldaa Tecla_IN
@@ -216,15 +219,16 @@ Fin_Teclado_Est3:        rts
 
 ;---------------------------- Teclado Est 4 --------------------------------
 
-Teclado_Est4:           ;movb #$10,PORTB ;Hecho para ver transicino de estados
-                        ldab MAX_TCL
-                        cmpa Cont_TCL
-                        beq Long_Max
+Teclado_Est4:           bclr PORTB,$6E
+			bset PORTB,$10 ;Hecho para ver transicino de estados
+                        ldaa Cont_TCL
+                        cmpa MAX_TCL
+                        bhi Long_Max
 
-No_Long_Max:                tst Cont_TCL
+No_Long_Max:            tst Cont_TCL
                         beq Array_Zero
 
-Array_No_Zero:                ldaa #$0B
+Array_No_Zero:          ldaa #$0B
                         cmpa Tecla
                         beq Borrar_Valor
                         ldaa #$0E
@@ -232,7 +236,7 @@ Array_No_Zero:                ldaa #$0B
                         beq Finalizar_Array
                         bra Agregar_Valor
 
-Array_Zero:                ldaa #$0B
+Array_Zero:             ldaa #$0B
                         cmpa Tecla
                         beq Reestablecer
                         ldaa #$0E
@@ -240,7 +244,7 @@ Array_Zero:                ldaa #$0B
                         beq Reestablecer
                         bra Agregar_Valor
 
-Long_Max:                ldaa #$0B
+Long_Max:               ldaa #$0B
                         cmpa Tecla
                         beq Borrar_Valor
                         ldaa #$0E
@@ -248,13 +252,13 @@ Long_Max:                ldaa #$0B
                         beq Finalizar_Array
                         bra Reestablecer
                         
-Agregar_Valor:                ldab Cont_TCL
+Agregar_Valor:          ldab Cont_TCL
                         ldy #Num_Array
                         movb Tecla,b,y
                         inc Cont_TCL
                         bra Reestablecer
                         
-Borrar_Valor:                dec Cont_TCL
+Borrar_Valor:           dec Cont_TCL
                         ldab Cont_TCL
                         ldy #Num_Array
                         movb #$FF,b,y
@@ -263,12 +267,11 @@ Borrar_Valor:                dec Cont_TCL
 Finalizar_Array:        bclr Cont_TCL,#$FF
                         bset Banderas_PB,ARRAY_OK
 
-Reestablecer:                movw #Teclado_Est1,Est_Pres_TCL
+Reestablecer:           movw #Teclado_Est1,Est_Pres_TCL
                         bset Tecla,#$FF
                         bset Tecla_IN,#$FF
 
-
-Fin_Teclado_Est4:        rts
+Fin_Teclado_Est4:       rts
 
 ;******************************************************************************
 ;                               TAREA LEER PB

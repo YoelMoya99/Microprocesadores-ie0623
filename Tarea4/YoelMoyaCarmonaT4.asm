@@ -15,7 +15,7 @@
 ;--- Aqui se colocan los valores de carga para los timers de la aplicacion ----
 
 tSupRebPB:        EQU 10
-tSupRebTCL:          EQU 10    ;Timer de sup rebotes para TCL, 10ms
+tSupRebTCL:       EQU 10    ;Timer de sup rebotes para TCL, 10ms
 tShortP:          EQU 25
 tLongP:           EQU 3
 tTimer1mS:        EQU 1     ;Base de tiempo de 1 mS (1 ms x 1)
@@ -41,7 +41,7 @@ Est_Pres_LeerPB:  ds 2
 Banderas_PB:      ds 1
 ShortP:           EQU $01
 LongP:            EQU $02
-ARRAY_OK:          EQU $04
+ARRAY_OK:         EQU $04
 
                   org $1010
 Num_Array:        ds 10
@@ -143,10 +143,9 @@ for:    movb #$FF,1,x+
 Despachador_Tareas
 
         Jsr Tarea_Led_Testigo
-        ; Aqui se colocan todas las tareas del programa de aplicacion
         Jsr Tarea_Teclado
         Jsr Tarea_Leer_PB
-        Jsr Tarea_LED_PB
+        Jsr Tarea_Borra_TCL
         
         Bra Despachador_Tareas
        
@@ -390,10 +389,10 @@ No_Valor:
 End_Leer_Teclado:        rts
 
 ;*****************************************************************************
-;                              TAREA LED PB
+;                              TAREA BORRA TCL (TAREA LED PB)
 ;*****************************************************************************
 
-Tarea_LED_PB:
+Tarea_Borra_TCL:
                         BrSet Banderas_PB,ShortP,ON
                         BrSet Banderas_PB,LongP,OFF
                         Bra FIN_Led
@@ -402,6 +401,14 @@ ON:                     BClr Banderas_PB,ShortP
                         Bra FIN_Led
 OFF:                    BClr Banderas_PB,LongP
                         BClr PORTB,$01
+                        
+                        ldx #Num_Array
+                        movb #$09,Cont_TCL
+forCLR:                 movb #$FF,1,x+
+                        dec Cont_TCL
+                        bne forCLR
+                        movb #$00,Cont_TCL
+                        bclr Banderas_PB,ARRAY_OK
 
 FIN_Led:                Rts
 ;******************************************************************************

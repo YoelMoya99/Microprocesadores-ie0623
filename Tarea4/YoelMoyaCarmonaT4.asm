@@ -227,26 +227,26 @@ Teclado_Est4:           bclr PORTB,$6E
 No_Long_Max:            tst Cont_TCL
                         beq Array_Zero
 
-Array_No_Zero:          ldaa #$0B
+Array_No_Zero:          ldaa #$0E
                         cmpa Tecla
                         beq Borrar_Valor
-                        ldaa #$0E
+                        ldaa #$0B
                         cmpa Tecla
                         beq Finalizar_Array
                         bra Agregar_Valor
 
-Array_Zero:             ldaa #$0B
+Array_Zero:             ldaa #$0E
                         cmpa Tecla
                         beq Reestablecer
-                        ldaa #$0E
+                        ldaa #$0B
                         cmpa Tecla
                         beq Reestablecer
                         bra Agregar_Valor
 
-Long_Max:               ldaa #$0B
+Long_Max:               ldaa #$0E
                         cmpa Tecla
                         beq Borrar_Valor
-                        ldaa #$0E
+                        ldaa #$0B
                         cmpa Tecla
                         beq Finalizar_Array
                         bra Reestablecer

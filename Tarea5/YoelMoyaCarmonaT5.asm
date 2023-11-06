@@ -38,7 +38,9 @@ tSupRebPB:        EQU 10
 tSupRebTCL:       EQU 10    ;Timer de sup rebotes para TCL, 10ms
 tShortP:          EQU 25
 tLongP:           EQU 3
-tTimer1mS:        EQU 1     ;Base de tiempo de 1 mS (1 ms x 1)
+tTimer20uS:       EQU 1     ;Base tiempo 20uS, freq interrupcion
+tTimer100uS:      EQU 5     ;Base de 100uS (5 x 20us)
+tTimer1mS:        EQU 10    ;Base de tiempo de 1 mS (100 uS x 10)
 tTimer10mS:       EQU 10    ;Base de tiempo de 10 mS (1 mS x 10)
 tTimer100mS:      EQU 10    ;Base de tiempo de 100 mS (10 mS x 100)
 tTimer1S:         EQU 10    ;Base de tiempo de 1 segundo (100 mS x 10)
@@ -75,35 +77,46 @@ Teclas:           dB $01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$0E,$0B ;Tabla TCL
                                 Org $1030
 Tabla_Timers_BaseT:
 
-Timer1mS        ds 1    ;Timer 1 ms con base a tiempo de interrupcion
+Timer20uS        ds 1    ;Timer 20uS con base tiempo de interrupcion
 
 Fin_BaseT       db $FF
 
-Tabla_Timers_Base1mS
+Tabla_Timers_Base20uS:
+Timer100uS        ds 1    ;Timer 100uS para generar la base tiempo 100uS
+
+Fin_Base20uS        db $FF
+
+Tabla_Timers_Base100uS:
+
+Timer1mS        ds 1    ;Timer para generar la base tiempo 1 mS
+
+Fin_Base100uS        db $FF
+
+Tabla_Timers_Base1mS:
 
 Timer10mS:      ds 1    ;Timer para generar la base de tiempo 10 mS
 Timer_RebPB:    ds 1    ;Timer supresion rebotes Leer PB
 Timer_RebTCL:   ds 1    ;Timer de supresion de rebotes teclado
 
-Fin_Base1mS:    dB $FF
+Fin_Base1mS    dB $FF
 
-Tabla_Timers_Base10mS
+Tabla_Timers_Base10mS:
 
-Timer100mS:     ds 1    ;Timer para generar la base de tiempo de 100 mS
-Timer_SHP:      ds 1    ;Timer para short press
+Timer100mS      ds 1    ;Timer para generar la base de tiempo de 100 mS
+Timer_SHP       ds 1    ;Timer para short press
 
 Fin_Base10ms    dB $FF
 
-Tabla_Timers_Base100mS
+Tabla_Timers_Base100mS:
 
-Timer1S:        ds 1    ;Timer para generar la base de tiempo de 1 Seg.
+Timer1S         ds 1    ;Timer para generar la base de tiempo de 1 Seg.
 
 Fin_Base100mS   dB $FF
 
-Tabla_Timers_Base1S
+Tabla_Timers_Base1S:
 
 Timer_LED_Testigo ds 1  ;Timer para parpadeo de led testigo
-Timer_LP:         ds 1  ;Timer para long press
+Timer_LP         ds 1  ;Timer para long press
 
 Fin_Base1S        dB $FF
 
@@ -125,7 +138,7 @@ Fin_Base1S        dB $FF
 
 ;-----------------------------------------------------------------------------
         movb #$90,TSCR1   ;Timer enable & Fast flag clear all
-        movb #$04,TSCR2   ;Prescaler de 16
+        movb #$00,TSCR2   ;Prescaler de 1
 
         movb #$10,TIOS    ;Timer Input Output set enable canal4
         movb #$10,TIE     ;Timer Interrutp enable canal4
@@ -133,7 +146,7 @@ Fin_Base1S        dB $FF
         movb #$01,TCTL1   ;Toggle, bit de control canal4
 
         ldd TCNT
-        addd #1500        ;Interrupcion configurada para 1mS (Test)
+        addd #480        ;Interrupcion configurada para 20uS
         std TC4
 ;-----------------------------------------------------------------------------
 ;===============================================================================
@@ -449,9 +462,26 @@ Maquina_Tiempos:
                ldx #Tabla_Timers_BaseT
                
                jsr Decre_Timers
-               
-               tst Timer1mS
+              
+               tst Timer20uS
                bne Retornar
+
+                movb #tTimer20uS,Timer20uS
+                ldx #Tabla_Timers_Base20uS
+
+                jsr Decre_Timers
+
+                tst Timer100uS
+                bne Retornar
+
+                movb #tTimer100uS,Timer100uS
+                ldx #Tabla_Timers_Base100uS
+
+                jsr Decre_Timers
+
+ 
+                tst Timer1mS
+                bne Retornar
                
                movb #tTimer1mS,Timer1mS
                ldx #Tabla_Timers_Base1mS
@@ -484,7 +514,7 @@ Maquina_Tiempos:
                
 Retornar:
                 ldd TCNT
-                addd #1500        ;Interrupcion configurada para 1mS (Test)
+                addd #480        ;Interrupcion configurada para 20uS
                 std TC4
                 
                 Rti

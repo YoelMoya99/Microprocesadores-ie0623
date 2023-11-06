@@ -26,7 +26,7 @@
  ;******************************************************************************
  ;                 RELOCALIZACION DE VECTOR DE INTERRUPCION
  ;******************************************************************************
-                                Org $3E64 ;OutputCompare (OC) maquina de tiempos
+                                Org $3E66 ;OutputCompare (OC) maquina de tiempos
                                 dw Maquina_Tiempos
 ;******************************************************************************
 ;                       DECLARACION DE LAS ESTRUCTURAS DE DATOS
@@ -124,17 +124,17 @@ Fin_Base1S        dB $FF
         bset PUCR,$01     ;Activa las resistencias de pullup del puerto A
 
 ;-----------------------------------------------------------------------------
-	movb #$90,TSCR1   ;Timer enable & Fast flag clear all
-	movb #$04,TSCR2   ;Prescaler de 16
+        movb #$90,TSCR1   ;Timer enable & Fast flag clear all
+        movb #$04,TSCR2   ;Prescaler de 16
 
-	movb #$20,TIOS    ;Timer Input Output set enable canal5
-	movb #$20,TIE     ;Timer Interrutp enable canal5
+        movb #$10,TIOS    ;Timer Input Output set enable canal4
+        movb #$10,TIE     ;Timer Interrutp enable canal4
 
-	movb #$04,TCTL1   ;Toggle, bit de control canal5
+        movb #$01,TCTL1   ;Toggle, bit de control canal4
 
-	ldd TCNT
-	addd #1500        ;Interrupcion configurada para 1mS (Test)
-	std TC5
+        ldd TCNT
+        addd #1500        ;Interrupcion configurada para 1mS (Test)
+        std TC4
 ;-----------------------------------------------------------------------------
 ;===============================================================================
 ;                           PROGRAMA PRINCIPAL
@@ -483,11 +483,11 @@ Maquina_Tiempos:
                jsr Decre_Timers
                
 Retornar:
-		ldd TCNT
-		addd #1500        ;Interrupcion configurada para 1mS (Test)
-		std TC5
+                ldd TCNT
+                addd #1500        ;Interrupcion configurada para 1mS (Test)
+                std TC4
                 
-		Rti
+                Rti
 ;===============================================================================
 ;                     SUBRUTINA DECREMETE TIMERS
 ; Esta subrutina decrementar los timers colocados en un arreglo apuntado por X,

@@ -179,7 +179,7 @@ for:    movb #$FF,1,x+
 Despachador_Tareas
 
         Jsr Tarea_Led_Testigo
-        Jsr Tarea_Teclado
+        ;Jsr Tarea_Teclado      Apagando tarea, momentaneo
         Jsr Tarea_Leer_PB
         Jsr Tarea_Borra_TCL
         

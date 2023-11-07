@@ -129,9 +129,12 @@ Fin_Base1S        dB $FF
         Bset DDRB,$FF     ;Habilitacion del LED Testigo cambioxxxx 80
         Bset DDRJ,$02     ;como comprobacion del timer de 1 segundo
         BClr PTJ,$02      ;haciendo toogle
+
+        movb #$70,DDRP    ;Habilitacion del led testigo tricolor
+        movb #$20,PTP     ;Inicializacion del led testigo en rojo
         
-        Movb #$0F,DDRP    ;bloquea los display de 7 Segmentos
-        Movb #$0F,PTP
+        ;Movb #$0F,DDRP    ;bloquea los display de 7 Segmentos
+        ;Movb #$0F,PTP     ;se mantienen solo activos para
         
         movb #$F0,DDRA    ;Define el puerto A como salida y entrada p/teclado
         bset PUCR,$01     ;Activa las resistencias de pullup del puerto A
@@ -444,27 +447,42 @@ End_Leer_Teclado:        rts
 ;******************************************************************************
 
 Tarea_Led_Testigo
-                Tst Timer_LED_Testigo
-                Bne FinLedTest
+                tst Timer_LED_Testigo
+                bne FinLedTest
+                
+                brset PTP,$20,Green
+                brset PTP,$40,Blue
+                brset PTP,$10,Red
+Red:
+                movb #$20,PTP
+                bra FinLedTest
+Green:
+                movb #$40,PTP
+                bra FinLedTest
+Blue:
+                movb #$10,PTP
+FinLedTest:
                 Movb #tTimerLDTst,Timer_LED_Testigo
-                Ldaa PORTB
-                Eora #$80
-                Staa PORTB
-FinLedTest      Rts
+                ;tst Timer_LED_Testigo
+                ;Bne retsubrut
+                ;Movb #tTimerLDTst,Timer_LED_Testigo
+                ;ldaa PORTB
+                ;Eora #$80
+                ;Staa PORTB
+
+retsubrut:      Rts
 
 ;******************************************************************************
 ;                       SUBRUTINA DE ATENCION A RTI
 ;******************************************************************************
 
 Maquina_Tiempos:
-
-               ;MAQUINA DE TIEMPOS
-               ldx #Tabla_Timers_BaseT
+                ldx #Tabla_Timers_BaseT
                
-               jsr Decre_Timers
+                jsr Decre_Timers
               
-               tst Timer20uS
-               bne Retornar
+                tst Timer20uS
+                bne Retornar
 
                 movb #tTimer20uS,Timer20uS
                 ldx #Tabla_Timers_Base20uS
@@ -479,39 +497,37 @@ Maquina_Tiempos:
 
                 jsr Decre_Timers
 
- 
                 tst Timer1mS
                 bne Retornar
                
-               movb #tTimer1mS,Timer1mS
-               ldx #Tabla_Timers_Base1mS
+                movb #tTimer1mS,Timer1mS
+                ldx #Tabla_Timers_Base1mS
                
-               jsr Decre_Timers
+                jsr Decre_Timers
                
-               tst Timer10mS
-               bne Retornar
+                tst Timer10mS
+                bne Retornar
 
-               movb #tTimer10mS,Timer10mS
-               ldx #Tabla_Timers_Base10mS
+                movb #tTimer10mS,Timer10mS
+                ldx #Tabla_Timers_Base10mS
 
-               jsr Decre_Timers
+                jsr Decre_Timers
                
-               tst Timer100mS
-               bne Retornar
+                tst Timer100mS
+                bne Retornar
 
-               movb #tTimer100mS,Timer100mS
-               ldx #Tabla_Timers_Base100mS
+                movb #tTimer100mS,Timer100mS
+                ldx #Tabla_Timers_Base100mS
 
-               jsr Decre_Timers
+                jsr Decre_Timers
                
-               tst Timer1S
-               bne Retornar
+                tst Timer1S
+                bne Retornar
 
-               movb #tTimer1S,Timer1S
-               ldx #Tabla_Timers_Base1S
+                movb #tTimer1S,Timer1S
+                ldx #Tabla_Timers_Base1S
 
-               jsr Decre_Timers
-               
+                jsr Decre_Timers
 Retornar:
                 ldd TCNT
                 addd #480        ;Interrupcion configurada para 20uS

@@ -39,12 +39,11 @@ tSupRebTCL:       EQU 10    ;Timer de sup rebotes para TCL, 10ms
 tShortP:          EQU 25
 tLongP:           EQU 3
 tTimer20uS:       EQU 1     ;Base tiempo 20uS, freq interrupcion
-tTimer100uS:      EQU 5     ;Base de 100uS (5 x 20us)
-tTimer1mS:        EQU 10    ;Base de tiempo de 1 mS (100 uS x 10)
+tTimer1mS:        EQU 50    ;Base de tiempo de 1 mS (100 uS x 10)
 tTimer10mS:       EQU 10    ;Base de tiempo de 10 mS (1 mS x 10)
 tTimer100mS:      EQU 10    ;Base de tiempo de 100 mS (10 mS x 100)
 tTimer1S:         EQU 10    ;Base de tiempo de 1 segundo (100 mS x 10)
-tTimerLDTst       EQU 1     ;Tiempo de parpadeo de LED testigo en segundos
+tTimerLDTst:       EQU 1     ;Tiempo de parpadeo de LED testigo en segundos
 
 PortPB            EQU PTH
 MaskPB            EQU $01
@@ -82,15 +81,9 @@ Timer20uS        ds 1    ;Timer 20uS con base tiempo de interrupcion
 Fin_BaseT       db $FF
 
 Tabla_Timers_Base20uS:
-Timer100uS        ds 1    ;Timer 100uS para generar la base tiempo 100uS
+Timer1mS        ds 1    ;Timer 1mS para generar la base tiempo 1mS
 
-Fin_Base20uS        db $FF
-
-Tabla_Timers_Base100uS:
-
-Timer1mS        ds 1    ;Timer para generar la base tiempo 1 mS
-
-Fin_Base100uS        db $FF
+Fin_Base20uS    db $FF
 
 Tabla_Timers_Base1mS:
 
@@ -445,37 +438,32 @@ End_Leer_Teclado:        rts
 ;******************************************************************************
 ;                        TAREA LED TESTIGO
 ;******************************************************************************
-
-Tarea_Led_Testigo
-
-                tst Timer_LED_Testigo
-                Bne retsubrut
-                ;Movb #tTimerLDTst,Timer_LED_Testigo
-                ldaa PORTB
-                Eora #$80
-                Staa PORTB
-
-retsubrut:      nop
+Tarea_Led_Testigo:
                 tst Timer_LED_Testigo
                 bne FinLedTest
 
-                
                 brset PTP,$20,Green
                 brset PTP,$40,Blue
-                brset PTP,$10,Red
+                ;brset PTP,$10,Red
 Red:
-                movb #$20,PTP
-                bra FinLedTest
+                bclr PTP,$10
+		bset PTP,$20
+		;movb #$20,PTP
+                bra Init_Timer_LED
 Green:
-                movb #$40,PTP
-                bra FinLedTest
+                bclr PTP,$20
+		bset PTP,$40
+		;movb #$40,PTP
+                bra Init_Timer_LED
 Blue:
-                movb #$10,PTP
-FinLedTest:
+		bclr PTP,$40
+		bset PTP,$10
+                ;movb #$10,PTP
+                
+Init_Timer_LED:
                 Movb #tTimerLDTst,Timer_LED_Testigo
 
-
-		Rts
+FinLedTest      Rts
 
 ;******************************************************************************
 ;                       SUBRUTINA DE ATENCION A RTI
@@ -483,7 +471,9 @@ FinLedTest:
 
 Maquina_Tiempos:
 
-
+                ldd TCNT
+                addd #480        ;Interrupcion configurada para 20uS
+                std TC4
 
                 ldx #Tabla_Timers_BaseT
                
@@ -494,14 +484,6 @@ Maquina_Tiempos:
 
                 movb #tTimer20uS,Timer20uS
                 ldx #Tabla_Timers_Base20uS
-
-                jsr Decre_Timers
-
-                tst Timer100uS
-                bne Retornar
-
-                movb #tTimer100uS,Timer100uS
-                ldx #Tabla_Timers_Base100uS
 
                 jsr Decre_Timers
 
@@ -537,12 +519,7 @@ Maquina_Tiempos:
 
                 jsr Decre_Timers
 
-Retornar:
-		ldd TCNT
-                addd #480        ;Interrupcion configurada para 20uS
-                std TC4
-
-	Rti
+Retornar:	Rti
 ;===============================================================================
 ;                     SUBRUTINA DECREMETE TIMERS
 ; Esta subrutina decrementar los timers colocados en un arreglo apuntado por X,

@@ -34,46 +34,139 @@
 
 ;--- Aqui se colocan los valores de carga para los timers de la aplicacion ----
 
-tSupRebPB:        EQU 10
-tSupRebTCL:       EQU 10    ;Timer de sup rebotes para TCL, 10ms
-tShortP:          EQU 25
-tLongP:           EQU 3
-tTimer20uS:       EQU 1     ;Base tiempo 20uS, freq interrupcion
-tTimer1mS:        EQU 50    ;Base de tiempo de 1 mS (100 uS x 10)
-tTimer10mS:       EQU 10    ;Base de tiempo de 10 mS (1 mS x 10)
-tTimer100mS:      EQU 10    ;Base de tiempo de 100 mS (10 mS x 100)
-tTimer1S:         EQU 10    ;Base de tiempo de 1 segundo (100 mS x 10)
-tTimerLDTst:       EQU 1     ;Tiempo de parpadeo de LED testigo en segundos
+tTimer20uS:           EQU 1     ;Base tiempo 20uS, freq interrupcion
+tTimer1mS:            EQU 50    ;Base de tiempo de 1 mS (100 uS x 10)
+tTimer10mS:           EQU 10    ;Base de tiempo de 10 mS (1 mS x 10)
+tTimer100mS:          EQU 10    ;Base de tiempo de 100 mS (10 mS x 100)
+tTimer1S:             EQU 10    ;Base de tiempo de 1 segundo (100 mS x 10)
 
-PortPB            EQU PTH
-MaskPB            EQU $01
 
-                                Org $1000
+;*******************************************************************
+;                     Estructuras de Datos
+;*******************************************************************
 
-;Aqui se colocan las estructuras de datos de la aplicacion
-MAX_TCL:          dB $06       ;Valor maximo del arreglo (1-6)
-Tecla:            ds 1         ;Variable retorno de sr Leer Teclado
-Tecla_IN:         ds 1         ;Variable temp para validez de tecla pulsada
-Cont_TCL:         ds 1         ;Offset del arreglo resultado
-Patron:           ds 1         ;Patron de lectura/escritura del puerto A
-Est_Pres_TCL:     ds 2         ;Variable de estado para teclado
-Est_Pres_LeerPB:  ds 2         ;Variable de estado para Leer PB
+;--------------------- Tarea_Teclado -------------------------------
+                        org $1000
+;-------------------------------------------------------------------
 
-Banderas:         ds 1
-ShortP:           EQU $01      ;Bandera para short press
-LongP:            EQU $02      ;Bandera para long press
-ARRAY_OK:         EQU $04      ;Bandera para arreglo listo
+MAX_TCL:              dB $06       ;Valor maximo del arreglo (1-6)
+Tecla:                ds 1         ;Variable retorno de sr Leer Teclado
+Tecla_IN:             ds 1         ;Variable temp para validez de tecla pulsada
+Cont_TCL:             ds 1         ;Offset del arreglo resultado
+Patron:               ds 1         ;Patron de lectura/escritura del puerto A
+Est_Pres_TCL:         ds 2         ;Variable de estado para teclado
 
-                  org $1010
-Num_Array:        ds 10        ;Arreglo de resultados
 
-                  org $1020
-Teclas:           dB $01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$0E,$0B ;Tabla TCL
+                      org $1010
+Num_Array:            ds 10        ;Arreglo de resultado 
+
+tSupRebTCL:           EQU 10    ;Timer de sup rebotes para TCL, 10ms
+
+
+;--------------------- Tarea_PantallaMUX ---------------------------
+                        org $1020
+;-------------------------------------------------------------------
+
+Est_Pres_PantallaMUX:   ds 2
+Dsp1:                        ds 1
+Dsp2:                        ds 1
+Dsp3:                        ds 1
+Dsp4:                        ds 1
+LEDS:                        ds 1
+Cont_Dig:                ds 1
+Brillo:                        ds 1
+BIN1:                        ds 1
+BIN2:                        ds 1
+BCD:                        ds 1
+Cont_BCD:                ds 1
+BCD1:                        ds 1
+BCD2:                        ds 2
+
+tTimerDigito:                EQU 2 
+MaxCountTicks:                EQU 100
+
+;---------------------- Tarea LCD ----------------------------------
+                        org $102F
+;-------------------------------------------------------------------
+EOB:                        EQU $FF
+
+IniDsp:                        dB $28 ;Function set
+                        dB $28 ;Function set 2
+                        dB $06 ;Entry Mode set
+                        dB $0C ;Display ON, Cursor OFF, No Blinking
+                        dB EOB ;End Of table
+
+Punt_LCD:                ds 2
+ChardLCD:                ds 1
+Msg_L1:                        ds 2 
+Msg_L2:                        ds 2 
+EstPres_SendLCD:        ds 2
+EstPres_TareaLCD:        ds 2
+
+tTimer2mS:                EQU 2
+tTimer260uS:                EQU 13
+tTimer40uS:                EQU 2
+
+Clear_LCD:                EQU $01
+ADD_L1:                        EQU $80
+ADD_L2:                        EQU $C0
+
+
+;---------------------- Tarea_LeerPB -------------------------------
+                        org $103F
+;-------------------------------------------------------------------
+Est_Pres_LeerPB:        ds 2         ;Variable de estado para Leer PB        
+
+tSupRebPB:              EQU 10
+tShortP:                EQU 25
+tLongP:                 EQU 3
+
+PortPB:                 EQU PTH
+MaskPB:                 EQU $01
+
+
+;---------------------- Banderas -----------------------------------
+                        org $1070
+;-------------------------------------------------------------------
+
+;Falta cambiar nombres en el resto de codigo banderas para banderas_1
+;Y falta cambiar arrayok para $10, asi como agregar el segundo banderas
+
+Banderas:               ds 1     
+ShortP:                 EQU $01      ;Bandera para short press
+LongP:                  EQU $02      ;Bandera para long press
+ARRAY_OK:               EQU $04      ;Bandera para arreglo listo
+
+
+;---------------------- Generales ----------------------------------
+                        org $1080
+;-------------------------------------------------------------------
+
+tTimerLDTst:            EQU 1     ;Tiempo de parpadeo de LED testigo en segundos
+
+BienvenidaLCD:                FCC ""
+                        FCC ""
+
+TransitorioLCD:                FCC ""
+                        FCC ""
+
+
+;---------------------- Tablas  ----------------------------------
+                        org $1080
+;-------------------------------------------------------------------
+
+SEGMENT:        dB $3F,$06,$5B,$4F,$66,$6D,$7D,$07,$7F,$6F ;Tabla codigos segmentos 
+Teclas:         dB $01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$0E,$0B ;Tabla TCL (MOVER)
+
+
+;---------------------- Mensajes -----------------------------------
+;------------------------------------------------------------------
+
 
 ;===============================================================================
 ;                              TABLA DE TIMERS
 ;===============================================================================
-                                Org $1030
+                                Org $1500
 Tabla_Timers_BaseT:
 
 Timer20uS        ds 1    ;Timer 20uS con base tiempo de interrupcion
@@ -81,7 +174,8 @@ Timer20uS        ds 1    ;Timer 20uS con base tiempo de interrupcion
 Fin_BaseT       db $FF
 
 Tabla_Timers_Base20uS:
-Timer1mS        ds 1    ;Timer 1mS para generar la base tiempo 1mS
+
+Timer1mS         ds 1    ;Timer 1mS para generar la base tiempo 1mS
 
 Fin_Base20uS    db $FF
 
@@ -175,7 +269,7 @@ for:    movb #$FF,1,x+
 Despachador_Tareas
 
         Jsr Tarea_Led_Testigo
-        ;Jsr Tarea_Teclado      Apagando tarea, momentaneo
+        Jsr Tarea_Teclado      Apagando tarea, momentaneo
         Jsr Tarea_Leer_PB
         Jsr Tarea_Borra_TCL
         
@@ -447,17 +541,17 @@ Tarea_Led_Testigo:
                 ;brset PTP,$10,Red
 Red:
                 bclr PTP,$10
-		bset PTP,$20
-		;movb #$20,PTP
+                bset PTP,$20
+                ;movb #$20,PTP
                 bra Init_Timer_LED
 Green:
                 bclr PTP,$20
-		bset PTP,$40
-		;movb #$40,PTP
+                bset PTP,$40
+                ;movb #$40,PTP
                 bra Init_Timer_LED
 Blue:
-		bclr PTP,$40
-		bset PTP,$10
+                bclr PTP,$40
+                bset PTP,$10
                 ;movb #$10,PTP
                 
 Init_Timer_LED:
@@ -519,7 +613,7 @@ Maquina_Tiempos:
 
                 jsr Decre_Timers
 
-Retornar:	Rti
+Retornar:        Rti
 ;===============================================================================
 ;                     SUBRUTINA DECREMETE TIMERS
 ; Esta subrutina decrementar los timers colocados en un arreglo apuntado por X,

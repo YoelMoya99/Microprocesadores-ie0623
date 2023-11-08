@@ -447,8 +447,18 @@ End_Leer_Teclado:        rts
 ;******************************************************************************
 
 Tarea_Led_Testigo
+
+                tst Timer_LED_Testigo
+                Bne retsubrut
+                ;Movb #tTimerLDTst,Timer_LED_Testigo
+                ldaa PORTB
+                Eora #$80
+                Staa PORTB
+
+retsubrut:      nop
                 tst Timer_LED_Testigo
                 bne FinLedTest
+
                 
                 brset PTP,$20,Green
                 brset PTP,$40,Blue
@@ -463,20 +473,18 @@ Blue:
                 movb #$10,PTP
 FinLedTest:
                 Movb #tTimerLDTst,Timer_LED_Testigo
-                ;tst Timer_LED_Testigo
-                ;Bne retsubrut
-                ;Movb #tTimerLDTst,Timer_LED_Testigo
-                ;ldaa PORTB
-                ;Eora #$80
-                ;Staa PORTB
 
-retsubrut:      Rts
+
+		Rts
 
 ;******************************************************************************
 ;                       SUBRUTINA DE ATENCION A RTI
 ;******************************************************************************
 
 Maquina_Tiempos:
+
+
+
                 ldx #Tabla_Timers_BaseT
                
                 jsr Decre_Timers
@@ -528,12 +536,13 @@ Maquina_Tiempos:
                 ldx #Tabla_Timers_Base1S
 
                 jsr Decre_Timers
+
 Retornar:
-                ldd TCNT
+		ldd TCNT
                 addd #480        ;Interrupcion configurada para 20uS
                 std TC4
-                
-                Rti
+
+	Rti
 ;===============================================================================
 ;                     SUBRUTINA DECREMETE TIMERS
 ; Esta subrutina decrementar los timers colocados en un arreglo apuntado por X,

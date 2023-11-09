@@ -272,17 +272,17 @@ for:    movb #$FF,1,x+
         Movw #PantallaMUX_Est1,Est_Pres_PantallaMUX ;init est1 pantallamux
 
 ; Prueba para ver si la pantalla de 7 segmentos funciona
-        movb #$06,Dsp1
-        movb #$6D,Dsp2
-        movb #$7D,Dsp3
-        movb #$07,Dsp4
+        ;movb #$06,Dsp1
+        ;movb #$6D,Dsp2
+        ;movb #$7D,Dsp3
+        ;movb #$07,Dsp4
         movb #60,Brillo
 ; Fin de prueba anterior
 
 Despachador_Tareas
 
         Jsr Tarea_Led_Testigo
-	Jsr Tarea_Conversion
+        Jsr Tarea_Conversion
         Jsr Tarea_PantallaMUX
         Jsr Tarea_Teclado 
         Jsr Tarea_Leer_PB
@@ -559,12 +559,12 @@ PBEst4_Retornar:        rts
 ;*****************************************************************************
 
 Tarea_Conversion:
-			movb #$18,BCD2
-			movb #$09,BCD1
+                        movb #$18,BCD2
+                        movb #$09,BCD1
 
-			jsr BCD_7Seg
+                        jsr BCD_7Seg
 
-			rts
+                        rts
 
 ;*****************************************************************************
 ;                TAREA BORRA TCL (anterior TAREA LED PB)
@@ -597,13 +597,30 @@ FIN_Led:                Rts
 ;*****************************************************************************
 
 BCD_7Seg:
-			
-			ldy #BCD1
-			ldx #SEGMENT
-			
-			ldd #$F00F
-			anda y
-			
+                        
+                        ldy #BCD2
+                        ldx #SEGMENT
+SegundoDisplay:
+                        ldd #$F00F
+                        anda 0,y
+                        lsra
+                        lsra
+                        lsra
+                        lsra
+                        andb 0,y
+
+                        cpy #BCD1
+                        beq Display34
+Display12:
+                        movb a,x,Dsp1
+                        movb b,x,Dsp2
+                        ldy #BCD1
+                        bra SegundoDisplay
+Display34:                
+                        movb a,x,Dsp3
+                        movb b,x,Dsp4
+                
+Fin_BCD_7Seg:                rts
 
 ;*****************************************************************************
 ;                  SUB RUTINA GENERAL LEER TECLADO

@@ -68,48 +68,48 @@ tSupRebTCL:           EQU 10    ;Timer de sup rebotes para TCL, 10ms
 ;-------------------------------------------------------------------
 
 Est_Pres_PantallaMUX:   ds 2
-Dsp1:                        ds 1
-Dsp2:                        ds 1
-Dsp3:                        ds 1
-Dsp4:                        ds 1
-LEDS:                        ds 1
-Cont_Dig:                ds 1
-Brillo:                        ds 1
-BIN1:                        ds 1
-BIN2:                        ds 1
-BCD:                        ds 1
-Cont_BCD:                ds 1
-BCD1:                        ds 1
-BCD2:                        ds 2
+Dsp1:                   ds 1
+Dsp2:                   ds 1
+Dsp3:                   ds 1
+Dsp4:                   ds 1
+LEDS:                   ds 1
+Cont_Dig:               ds 1
+Brillo:                 ds 1
+BIN1:                   ds 1
+BIN2:                   ds 1
+BCD:                    ds 1
+Cont_BCD:               ds 1
+BCD1:                   ds 1
+BCD2:                   ds 2
 
-tTimerDigito:                EQU 2 
-MaxCountTicks:                EQU 100
+tTimerDigito:           EQU 2
+MaxCountTicks:          EQU 100
 
 ;---------------------- Tarea LCD ----------------------------------
                         org $102F
 ;-------------------------------------------------------------------
-EOB:                        EQU $FF
+EOB:                    EQU $FF
 
-IniDsp:                        dB $28 ;Function set
+IniDsp:                 dB $28 ;Function set
                         dB $28 ;Function set 2
                         dB $06 ;Entry Mode set
                         dB $0C ;Display ON, Cursor OFF, No Blinking
                         dB EOB ;End Of table
 
-Punt_LCD:                ds 2
-ChardLCD:                ds 1
-Msg_L1:                        ds 2 
-Msg_L2:                        ds 2 
+Punt_LCD:               ds 2
+ChardLCD:               ds 1
+Msg_L1:                 ds 2
+Msg_L2:                 ds 2
 EstPres_SendLCD:        ds 2
-EstPres_TareaLCD:        ds 2
+EstPres_TareaLCD:       ds 2
 
-tTimer2mS:                EQU 2
-tTimer260uS:                EQU 13
-tTimer40uS:                EQU 2
+tTimer2mS:              EQU 2
+tTimer260uS:            EQU 13
+tTimer40uS:             EQU 2
 
-Clear_LCD:                EQU $01
-ADD_L1:                        EQU $80
-ADD_L2:                        EQU $C0
+Clear_LCD:              EQU $01
+ADD_L1:                 EQU $80
+ADD_L2:                 EQU $C0
 
 
 ;---------------------- Tarea_LeerPB -------------------------------
@@ -144,10 +144,10 @@ ARRAY_OK:               EQU $04      ;Bandera para arreglo listo
 
 tTimerLDTst:            EQU 1     ;Tiempo de parpadeo de LED testigo en segundos
 
-BienvenidaLCD:                FCC ""
+BienvenidaLCD:          FCC ""
                         FCC ""
 
-TransitorioLCD:                FCC ""
+TransitorioLCD:         FCC ""
                         FCC ""
 
 
@@ -169,41 +169,45 @@ Teclas:         dB $01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$0E,$0B ;Tabla TCL (M
                                 Org $1500
 Tabla_Timers_BaseT:
 
-Timer20uS        ds 1    ;Timer 20uS con base tiempo de interrupcion
+Timer20uS        ds 1   ;Timer 20uS con base tiempo de interrupcion
 
-Fin_BaseT       db $FF
+Fin_BaseT        db $FF
 
 Tabla_Timers_Base20uS:
 
 Timer1mS         ds 1    ;Timer 1mS para generar la base tiempo 1mS
+Counter_Ticks    ds 1
 
-Fin_Base20uS    db $FF
+Fin_Base20uS     db $FF
 
 Tabla_Timers_Base1mS:
 
-Timer10mS:      ds 1    ;Timer para generar la base de tiempo 10 mS
-Timer_RebPB:    ds 1    ;Timer supresion rebotes Leer PB
-Timer_RebTCL:   ds 1    ;Timer de supresion de rebotes teclado
+Timer10mS:       ds 1    ;Timer para generar la base de tiempo 10 mS
+TimerDigito:     ds 1    ;Timer de digito de pantalla MUX
+Timer_RebPB:     ds 1    ;Timer supresion rebotes Leer PB
+Timer_RebTCL:    ds 1    ;Timer de supresion de rebotes teclado
 
-Fin_Base1mS    dB $FF
+
+Fin_Base1mS      dB $FF
 
 Tabla_Timers_Base10mS:
 
-Timer100mS      ds 1    ;Timer para generar la base de tiempo de 100 mS
-Timer_SHP       ds 1    ;Timer para short press
+Timer100mS       ds 1    ;Timer para generar la base de tiempo de 100 mS
+Timer_SHP        ds 1    ;Timer para short press
 
-Fin_Base10ms    dB $FF
+
+Fin_Base10ms     dB $FF
 
 Tabla_Timers_Base100mS:
 
-Timer1S         ds 1    ;Timer para generar la base de tiempo de 1 Seg.
+Timer1S          ds 1    ;Timer para generar la base de tiempo de 1 Seg.
 
-Fin_Base100mS   dB $FF
+Fin_Base100mS    dB $FF
 
 Tabla_Timers_Base1S:
 
 Timer_LED_Testigo ds 1  ;Timer para parpadeo de led testigo
-Timer_LP         ds 1  ;Timer para long press
+Timer_LP          ds 1  ;Timer para long press
 
 Fin_Base1S        dB $FF
 
@@ -213,15 +217,12 @@ Fin_Base1S        dB $FF
 
                                Org $2000
 
-        Bset DDRB,$FF     ;Habilitacion del LED Testigo cambioxxxx 80
-        Bset DDRJ,$02     ;como comprobacion del timer de 1 segundo
-        BClr PTJ,$02      ;haciendo toogle
+        Bset DDRB,$FF     ;Habilitacion de puerto B como salida
+        Bset DDRJ,$02     ;Habilitacion de PB
+        BClr PTJ,$02
 
-        movb #$70,DDRP    ;Habilitacion del led testigo tricolor
-        movb #$20,PTP     ;Inicializacion del led testigo en rojo
-        
-        ;Movb #$0F,DDRP    ;bloquea los display de 7 Segmentos
-        ;Movb #$0F,PTP     ;se mantienen solo activos para
+        movb #$FF,DDRP    ;Habilitacion del led testigo tricolor
+        bset PTP,$2F      ;Inicializacion del led testigo en azul
         
         movb #$F0,DDRA    ;Define el puerto A como salida y entrada p/teclado
         bset PUCR,$01     ;Activa las resistencias de pullup del puerto A
@@ -247,11 +248,14 @@ Fin_Base1S        dB $FF
         Movb #tTimer100mS,Timer100mS
         Movb #tTimer1S,Timer1S
         Movb #tTimerLDTst,Timer_LED_Testigo  ;inicia timer parpadeo led testigo
+        Movb #tTimerDigito,TimerDigito  ;Inicia timer de digito pantallaMUX
 
         movb #$FF,Tecla    ;Inicializa el valor de tecla
         movb #$FF,Tecla_IN ;Inicializa el valor de tecla_in
         movb #$00,Cont_TCL ;Inicializa offset en cero
         movb #$00,Patron   ;Inicializa patron del lectura teclado
+        movb #$01,Cont_Dig   ;Digito de multiplexacion
+        movb #$02,LEDS     ;Inicializa leds en pares
 
         ldx #Num_Array     ;Inicializa el array con FF para los primeros
         movb #$09,Cont_TCL ;9 valores.
@@ -264,17 +268,103 @@ for:    movb #$FF,1,x+
         Cli                                 ;Habilita interrupciones
         Clr Banderas                        ;Limpia las banderas
         Movw #LeerPB_Est1,Est_Pres_LeerPB   ;Inicializa estado1 LeerPB
-        Movw #Teclado_Est1,Est_Pres_TCL     ;Inicializa estado3 Teclado
+        Movw #Teclado_Est1,Est_Pres_TCL     ;Inicializa estado1 Teclado
+        Movw #PantallaMUX_Est1,Est_Pres_PantallaMUX ;init est1 pantallamux
+
+; Prueba para ver si la pantalla de 7 segmentos funciona
+        movb #$06,Dsp1
+        movb #$6D,Dsp2
+        movb #$7D,Dsp3
+        movb #$07,Dsp4
+        movb #60,Brillo
+; Fin de prueba anterior
 
 Despachador_Tareas
 
         Jsr Tarea_Led_Testigo
-        Jsr Tarea_Teclado      Apagando tarea, momentaneo
+        Jsr Tarea_PantallaMUX
+        Jsr Tarea_Teclado 
         Jsr Tarea_Leer_PB
         Jsr Tarea_Borra_TCL
         
         Bra Despachador_Tareas
        
+
+
+;******************************************************************************
+;                               TAREA PANTALLA MUX
+;******************************************************************************
+
+Tarea_PantallaMUX:
+                        ldx Est_Pres_PantallaMUX
+                        jsr 0,x
+                        rts
+
+;------------------------------ PantallaMUX Est1 ---------------------------------
+
+PantallaMUX_Est1:  
+                        tst TimerDigito
+                        bne Fin_PantallaMUX_Est1
+                        
+                        movb #tTimerDigito,TimerDigito
+                        
+                        ldaa Cont_Dig
+                        cmpa #$01
+                        beq Display_1
+                        cmpa #$02
+                        beq Display_2
+                        cmpa #$03
+                        beq Display_3
+                        cmpa #$04
+                        beq Display_4
+Display_LEDS:
+                        bclr PTJ,$02
+                        movb LEDS,PORTB
+                        movb #$01,Cont_Dig
+                        bra Cambio_Estado
+                        
+Display_1:
+                        bclr PTP,$01
+                        movb Dsp1,PORTB
+                        inc Cont_Dig
+                        bra Cambio_Estado
+Display_2:
+                        bclr PTP,$02
+                        movb Dsp2,PORTB
+                        inc Cont_Dig
+                        bra Cambio_Estado
+Display_3:
+                        bclr PTP,$04
+                        movb Dsp3,PORTB
+                        inc Cont_Dig
+                        bra Cambio_Estado
+Display_4:
+                        bclr PTP,$08
+                        movb Dsp4,PORTB
+                        inc Cont_Dig
+
+Cambio_Estado:
+                        movb #MaxCountTicks,Counter_Ticks
+                        movw #PantallaMUX_Est2,Est_Pres_PantallaMUX
+
+Fin_PantallaMUX_Est1:   rts
+
+
+;------------------------------ PantallaMUX Est2 ---------------------------------
+
+PantallaMUX_Est2:  
+                        ldaa #MaxCountTicks
+                        suba Brillo
+                        
+                        cmpa Counter_Ticks
+                        bne Fin_PantallaMUX_Est2
+                        
+                        bset PTP,$0F
+                        bset PTJ,$02
+
+                        movw #PantallaMUX_Est1,Est_Pres_PantallaMUX
+                        
+Fin_PantallaMUX_Est2:   rts
 
 ;******************************************************************************
 ;                               TAREA TECLADO

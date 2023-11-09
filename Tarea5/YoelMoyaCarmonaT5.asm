@@ -282,6 +282,7 @@ for:    movb #$FF,1,x+
 Despachador_Tareas
 
         Jsr Tarea_Led_Testigo
+	Jsr Tarea_Conversion
         Jsr Tarea_PantallaMUX
         Jsr Tarea_Teclado 
         Jsr Tarea_Leer_PB
@@ -552,6 +553,19 @@ PBest4_State1:          movw #LeerPB_Est1,Est_Pres_LeerPB
 
 PBEst4_Retornar:        rts
 
+
+;*****************************************************************************
+;                               TAREA CONVERSION
+;*****************************************************************************
+
+Tarea_Conversion:
+			movb #$18,BCD2
+			movb #$09,BCD1
+
+			jsr BCD_7Seg
+
+			rts
+
 ;*****************************************************************************
 ;                TAREA BORRA TCL (anterior TAREA LED PB)
 ;*****************************************************************************
@@ -575,6 +589,21 @@ forCLR:                 movb #$FF,1,x+      ;limpiar el arreglo. Y se agrega
                         bclr Banderas,ARRAY_OK
 
 FIN_Led:                Rts
+
+
+
+;*****************************************************************************
+;                  SUB RUTINA GENERAL BCD - 7 SEG
+;*****************************************************************************
+
+BCD_7Seg:
+			
+			ldy #BCD1
+			ldx #SEGMENT
+			
+			ldd #$F00F
+			anda y
+			
 
 ;*****************************************************************************
 ;                  SUB RUTINA GENERAL LEER TECLADO

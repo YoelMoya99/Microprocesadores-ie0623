@@ -272,27 +272,27 @@ for:    movb #$FF,1,x+
         Movw #PantallaMUX_Est1,Est_Pres_PantallaMUX ;init est1 pantallamux
 
 ;prueba eliminando tarea conversion:
-        movb #$06,Dsp1
-        movb #$6D,Dsp2
-        movb #$7D,Dsp3
-        movb #$07,Dsp4
-        movb #60,Brillo
+        ;movb #$06,Dsp1
+        ;movb #$6D,Dsp2
+        ;movb #$7D,Dsp3
+        ;movb #$07,Dsp4
+        movb #80,Brillo
 ; Fin de prueba
 
 ;segunda prueba para ver si la tarea conversion funciona
-        ;movb #$60,BIN2
-        ;movb #$60,BIN1
+        movb #$60,BIN2
+        movb #$60,BIN1
 ;fin prueba anterior
 
 Despachador_Tareas
 
 
         Jsr Tarea_Led_Testigo
+        Jsr Tarea_Conversion
         Jsr Tarea_PantallaMUX
         Jsr Tarea_Teclado
         Jsr Tarea_Leer_PB
         ;Jsr Tarea_TCM
-        ;Jsr Tarea_Conversion
         Jsr Tarea_Borra_TCL
         
         Bra Despachador_Tareas
@@ -356,8 +356,9 @@ Display_4:
                         inc Cont_Dig
 
 Cambio_Estado:
+                        ;movb Brillo,Counter_Ticks
                         movb #MaxCountTicks,Counter_Ticks
-                        movw #PantallaMUX_Est2,Est_Pres_PantallaMUX
+			movw #PantallaMUX_Est2,Est_Pres_PantallaMUX
 
 Fin_PantallaMUX_Est1:   rts
 
@@ -367,9 +368,10 @@ Fin_PantallaMUX_Est1:   rts
 PantallaMUX_Est2:  
                         ldaa #MaxCountTicks
                         suba Brillo
-                        
+                        ;tst Counter_Ticks
                         cmpa Counter_Ticks
-                        bne Fin_PantallaMUX_Est2
+                        ;bne Fin_PantallaMUX_Est2
+                        bhs Fin_PantallaMUX_Est2
                         
                         bset PTP,$0F
                         bset PTJ,$02

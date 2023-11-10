@@ -178,7 +178,7 @@ Tabla_Timers_Base20uS:
 Timer1mS         ds 1    ;Timer 1mS para generar la base tiempo 1mS
 Counter_Ticks    ds 1
 
-Fin_Base20uS     db $FF
+Fin_Base20uS:    db $FF
 
 Tabla_Timers_Base1mS:
 
@@ -194,7 +194,6 @@ Tabla_Timers_Base10mS:
 
 Timer100mS       ds 1    ;Timer para generar la base de tiempo de 100 mS
 Timer_SHP        ds 1    ;Timer para short press
-
 
 Fin_Base10ms     dB $FF
 
@@ -229,7 +228,7 @@ Fin_Base1S        dB $FF
 
 ;-----------------------------------------------------------------------------
         movb #$90,TSCR1   ;Timer enable & Fast flag clear all
-        movb #$00,TSCR2   ;Prescaler de 1
+        movb #$00,TSCR2   ;Prescaler de 16
 
         movb #$10,TIOS    ;Timer Input Output set enable canal4
         movb #$10,TIE     ;Timer Interrutp enable canal4
@@ -243,6 +242,7 @@ Fin_Base1S        dB $FF
 ;===============================================================================
 ;                           PROGRAMA PRINCIPAL
 ;===============================================================================
+        Movb #tTimer20uS,Timer20uS
         Movb #tTimer1mS,Timer1mS
         Movb #tTimer10mS,Timer10mS         ;Inicia los timers de bases de tiempo
         Movb #tTimer100mS,Timer100mS
@@ -254,7 +254,7 @@ Fin_Base1S        dB $FF
         movb #$FF,Tecla_IN ;Inicializa el valor de tecla_in
         movb #$00,Cont_TCL ;Inicializa offset en cero
         movb #$00,Patron   ;Inicializa patron del lectura teclado
-        movb #$01,Cont_Dig   ;Digito de multiplexacion
+        movb #1,Cont_Dig   ;Digito de multiplexacion
         movb #$02,LEDS     ;Inicializa leds en pares
 
         ldx #Num_Array     ;Inicializa el array con FF para los primeros
@@ -271,21 +271,28 @@ for:    movb #$FF,1,x+
         Movw #Teclado_Est1,Est_Pres_TCL     ;Inicializa estado1 Teclado
         Movw #PantallaMUX_Est1,Est_Pres_PantallaMUX ;init est1 pantallamux
 
-; Prueba para ver si la pantalla de 7 segmentos funciona
-        ;movb #$06,Dsp1
-        ;movb #$6D,Dsp2
-        ;movb #$7D,Dsp3
-        ;movb #$07,Dsp4
+;prueba eliminando tarea conversion:
+        movb #$06,Dsp1
+        movb #$6D,Dsp2
+        movb #$7D,Dsp3
+        movb #$07,Dsp4
         movb #60,Brillo
-; Fin de prueba anterior
+; Fin de prueba
+
+;segunda prueba para ver si la tarea conversion funciona
+        ;movb #$60,BIN2
+        ;movb #$60,BIN1
+;fin prueba anterior
 
 Despachador_Tareas
 
+
         Jsr Tarea_Led_Testigo
-        Jsr Tarea_Conversion
         Jsr Tarea_PantallaMUX
-        Jsr Tarea_Teclado 
+        Jsr Tarea_Teclado
         Jsr Tarea_Leer_PB
+        ;Jsr Tarea_TCM
+        ;Jsr Tarea_Conversion
         Jsr Tarea_Borra_TCL
         
         Bra Despachador_Tareas
@@ -310,18 +317,22 @@ PantallaMUX_Est1:
                         movb #tTimerDigito,TimerDigito
                         
                         ldaa Cont_Dig
-                        cmpa #$01
+                        
+                        cmpa #1
                         beq Display_1
-                        cmpa #$02
+
+                        cmpa #2
                         beq Display_2
-                        cmpa #$03
+
+                        cmpa #3
                         beq Display_3
-                        cmpa #$04
+
+                        cmpa #4
                         beq Display_4
 Display_LEDS:
                         bclr PTJ,$02
                         movb LEDS,PORTB
-                        movb #$01,Cont_Dig
+                        movb #01,Cont_Dig
                         bra Cambio_Estado
                         
 Display_1:
@@ -559,8 +570,13 @@ PBEst4_Retornar:        rts
 ;*****************************************************************************
 
 Tarea_Conversion:
-                        movb #$18,BCD2
-                        movb #$09,BCD1
+                        ldaa BIN1
+                        jsr BIN_BCD_MUXP
+                        movb BCD,BCD1
+
+                        ldaa BIN2
+                        jsr BIN_BCD_MUXP
+                        movb BCD,BCD2
 
                         jsr BCD_7Seg
 
@@ -590,7 +606,49 @@ forCLR:                 movb #$FF,1,x+      ;limpiar el arreglo. Y se agrega
 
 FIN_Led:                Rts
 
+;*****************************************************************************
+;                  SUB RUTINA GENERAL BIN BCD MUXP
+;*****************************************************************************
+BIN_BCD_MUXP:
+                        bclr BCD,$FF
+                        movb #$05,Cont_BCD
+                        lsla
+                        rol BCD
+                        lsla
+                        rol BCD
 
+                        psha
+
+bin_BCD_loop:
+                        pula
+                        lsla
+                        rol BCD
+                        psha
+
+                        ldd #$F00F
+                        anda BCD
+                        andb BCD
+
+                        cmpa #$50
+                        blo no_add_30
+                        adda #$30
+no_add_30:
+                        cmpb #$05
+                        blo no_add_03
+                        addb #$03
+no_add_03:
+                        aba
+                        staa BCD
+
+                        dec Cont_BCD
+                        tst Cont_BCD
+                        bne bin_BCD_loop
+
+                        pula
+                        lsla
+                        rol BCD
+Fin_BIN_BCD_MUXP:
+                        rts
 
 ;*****************************************************************************
 ;                  SUB RUTINA GENERAL BCD - 7 SEG

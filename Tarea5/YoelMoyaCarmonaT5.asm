@@ -276,7 +276,7 @@ for:    movb #$FF,1,x+
         ;movb #$6D,Dsp2
         ;movb #$7D,Dsp3
         ;movb #$07,Dsp4
-        movb #80,Brillo
+        movb #90,Brillo
 ; Fin de prueba
 
 ;segunda prueba para ver si la tarea conversion funciona
@@ -315,7 +315,6 @@ PantallaMUX_Est1:
                         bne Fin_PantallaMUX_Est1
                         
                         movb #tTimerDigito,TimerDigito
-                        
                         ldaa Cont_Dig
                         
                         cmpa #1
@@ -356,9 +355,8 @@ Display_4:
                         inc Cont_Dig
 
 Cambio_Estado:
-                        ;movb Brillo,Counter_Ticks
                         movb #MaxCountTicks,Counter_Ticks
-			movw #PantallaMUX_Est2,Est_Pres_PantallaMUX
+                        movw #PantallaMUX_Est2,Est_Pres_PantallaMUX
 
 Fin_PantallaMUX_Est1:   rts
 
@@ -367,11 +365,10 @@ Fin_PantallaMUX_Est1:   rts
 
 PantallaMUX_Est2:  
                         ldaa #MaxCountTicks
-                        suba Brillo
-                        ;tst Counter_Ticks
-                        cmpa Counter_Ticks
-                        ;bne Fin_PantallaMUX_Est2
-                        bhs Fin_PantallaMUX_Est2
+                        suba Counter_Ticks
+                        
+                        cmpa Brillo
+                        blo Fin_PantallaMUX_Est2
                         
                         bset PTP,$0F
                         bset PTJ,$02
@@ -734,21 +731,17 @@ Tarea_Led_Testigo:
 
                 brset PTP,$20,Green
                 brset PTP,$40,Blue
-                ;brset PTP,$10,Red
 Red:
                 bclr PTP,$10
                 bset PTP,$20
-                ;movb #$20,PTP
                 bra Init_Timer_LED
 Green:
                 bclr PTP,$20
                 bset PTP,$40
-                ;movb #$40,PTP
                 bra Init_Timer_LED
 Blue:
                 bclr PTP,$40
                 bset PTP,$10
-                ;movb #$10,PTP
                 
 Init_Timer_LED:
                 Movb #tTimerLDTst,Timer_LED_Testigo

@@ -80,7 +80,7 @@ BIN2:                   ds 1
 BCD:                    ds 1
 Cont_BCD:               ds 1
 BCD1:                   ds 1
-BCD2:                   ds 2
+BCD2:                   ds 1
 
 tTimerDigito:           EQU 2
 MaxCountTicks:          EQU 100
@@ -143,19 +143,25 @@ ARRAY_OK:               EQU $04      ;Bandera para arreglo listo
 ;-------------------------------------------------------------------
 
 tTimerLDTst:            EQU 1     ;Tiempo de parpadeo de LED testigo en segundos
-
+tMinutosTCM:            EQU 2
+tSegundosTCM:           EQU 20
+MinutosTCM:             ds 1
 BienvenidaLCD:          FCC ""
                         FCC ""
 
 TransitorioLCD:         FCC ""
                         FCC ""
+Est_Pres_TCM:           ds 2
 
 
 ;---------------------- Tablas  ----------------------------------
-                        org $1080
+                        org $1100
 ;-------------------------------------------------------------------
 
 SEGMENT:        dB $3F,$06,$5B,$4F,$66,$6D,$7D,$07,$7F,$6F ;Tabla codigos segmentos 
+
+                        org $1110
+
 Teclas:         dB $01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$0E,$0B ;Tabla TCL (MOVER)
 
 
@@ -207,7 +213,7 @@ Tabla_Timers_Base1S:
 
 Timer_LED_Testigo ds 1  ;Timer para parpadeo de led testigo
 Timer_LP          ds 1  ;Timer para long press
-
+SegundosTCM          ds 1
 Fin_Base1S        dB $FF
 
 ;===============================================================================
@@ -255,7 +261,7 @@ Fin_Base1S        dB $FF
         movb #$00,Cont_TCL ;Inicializa offset en cero
         movb #$00,Patron   ;Inicializa patron del lectura teclado
         movb #1,Cont_Dig   ;Digito de multiplexacion
-        movb #$02,LEDS     ;Inicializa leds en pares
+        movb #$55,LEDS     ;Inicializa leds en pares
 
         ldx #Num_Array     ;Inicializa el array con FF para los primeros
         movb #$09,Cont_TCL ;9 valores.
@@ -270,6 +276,7 @@ for:    movb #$FF,1,x+
         Movw #LeerPB_Est1,Est_Pres_LeerPB   ;Inicializa estado1 LeerPB
         Movw #Teclado_Est1,Est_Pres_TCL     ;Inicializa estado1 Teclado
         Movw #PantallaMUX_Est1,Est_Pres_PantallaMUX ;init est1 pantallamux
+        Movw #TCM_Est1,Est_Pres_TCM
 
 ;prueba eliminando tarea conversion:
         ;movb #$06,Dsp1
@@ -280,8 +287,8 @@ for:    movb #$FF,1,x+
 ; Fin de prueba
 
 ;segunda prueba para ver si la tarea conversion funciona
-        movb #$60,BIN2
-        movb #$60,BIN1
+;        movb #$60,BIN2
+;        movb #$60,BIN1
 ;fin prueba anterior
 
 Despachador_Tareas
@@ -292,13 +299,58 @@ Despachador_Tareas
         Jsr Tarea_PantallaMUX
         Jsr Tarea_Teclado
         Jsr Tarea_Leer_PB
-        ;Jsr Tarea_TCM
+        Jsr Tarea_TCM
         Jsr Tarea_Borra_TCL
         
         Bra Despachador_Tareas
        
+;******************************************************************************
+;                                   TAREA TCM
+;******************************************************************************
+Tarea_TCM:
+                        ldx Est_Pres_TCM
+                        jsr 0,x
+                        rts
 
+;------------------------------ TCM Est1 -------------------------------------
 
+TCM_Est1:
+                        movb #tMinutosTCM,MinutosTCM
+                        movb #tSegundosTCM,SegundosTCM
+                        movb #tMinutosTCM,BIN2
+                        movb #tSegundosTCM,BIN1
+                        brclr Banderas,ShortP,Fin_TCM_Est1
+                        movb #$AA,LEDS
+                        movw #TCM_Est2,Est_Pres_TCM
+
+Fin_TCM_Est1:                rts
+
+;----------------------------- TCM Est2 --------------------------------------
+
+TCM_Est2:
+			movb MinutosTCM,BIN2
+                        movb SegundosTCM,BIN1
+
+                        tst SegundosTCM
+                        bne Fin_TCM_Est2
+
+                        tst MinutosTCM
+                        bne Continue_TCM
+
+                        movb #tMinutosTCM,MinutosTCM
+                        movb #tSegundosTCM,SegundosTCM
+
+                        movb #tMinutosTCM,BIN2
+                        movb #tSegundosTCM,BIN1
+
+                        movw #TCM_Est1,Est_Pres_TCM
+                        bra Fin_TCM_Est2
+
+Continue_TCM:
+                        dec MinutosTCM
+                        movb #59,SegundosTCM
+
+Fin_TCM_Est2:           rts
 ;******************************************************************************
 ;                               TAREA PANTALLA MUX
 ;******************************************************************************

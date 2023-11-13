@@ -256,32 +256,31 @@ Fin_Base1S        dB $FF
         std TC4
 ;-----------------------------------------------------------------------------
 
-	;Inicializacion de la pantalla LCD, Hardware
+        ;Inicializacion de la pantalla LCD, Hardware
         movb #tTimer20uS,Timer20uS
-        ;movb #tTimer260uS,Timer260uS
-        ;movb #tTimer40uS,Timer40uS
+        movb #tTimer260uS,Timer260uS
+        movb #tTimer40uS,Timer40uS
         Movb #tTimer1mS,Timer1mS
         movw #SendLCD_Est1,EstPres_SendLCD
         movb #$FF,DDRK
-        movb #IniDsp,Punt_LCD
+        movw #IniDsp,Punt_LCD
         ldy Punt_LCD
         Clr Banderas_2
-	;bclr Banderas_2,RS
-        ;bclr Banderas_2,Second_Line
-        ;bclr Banderas_2,LCD_OK
+        bset Banderas_2,RS
         Cli
 
 Send_IniDsp:
-        ;ldy Punt_LCD
+        ldy Punt_LCD
         movb 1,y+,CharLCD
-        ;sty Punt_LCD
-        ;ldaa CharLCD
-        ;cmpa #$FF
-        ;beq Send_Clear
+        sty Punt_LCD
+        
         brset CharLCD,$FF,Send_Clear
+        
 Loop1_Tarea_SendLCD:
         jsr Tarea_SendLCD
+        
         brclr Banderas_2,FinSendLCD,Loop1_Tarea_SendLCD
+        
         bclr Banderas_2,FinSendLCD
         bra Send_IniDsp
 
@@ -289,6 +288,7 @@ Send_Clear:
         movb #Clear_LCD,CharLCD
 Loop2_Tarea_SendLCD:
         jsr Tarea_SendLCD
+        
         brclr Banderas_2,FinSendLCD,Loop2_Tarea_SendLCD
 
         bclr Banderas_2,FinSendLCD
@@ -296,8 +296,6 @@ Loop2_Tarea_SendLCD:
         movb #tTimer2mS,Timer2mS
 Dos_mS_Wait:
         tst Timer2mS
-        nop
-        nop
         bne Dos_mS_Wait
 
 ;===============================================================================
@@ -381,7 +379,7 @@ SendLCD_Est1:
                         lsra
                         staa PORTK
 
-                        brclr Banderas_2,RS,ComandoLCD_Est1
+                        brset Banderas_2,RS,ComandoLCD_Est1
                         bset PORTK,$01
                         bra No_ComandoLCD_Est1
 ComandoLCD_Est1:
@@ -391,14 +389,14 @@ No_ComandoLCD_Est1:
                         movb #tTimer260uS,Timer260uS
                         movw #SendLCD_Est2,EstPres_SendLCD
 
-Fin_SendLCD_Est1:        rts
+Fin_SendLCD_Est1:       rts
 
 ;----------------------- SendLCD_Est2 ----------------------------------------
 
 SendLCD_Est2:
                         tst Timer260uS
                         bne Fin_SendLCD_Est2
-                        bset PORTB,$08
+
                         bclr PORTK,$02
 
                         ldaa #$0F
@@ -420,7 +418,7 @@ No_ComandoLCD_Est2:
                         movw #SendLCD_Est3,EstPres_SendLCD
 
 Fin_SendLCD_Est2:
-			rts
+                        rts
 
 ;---------------------- SendLCD_Est3 -----------------------------------------
 

@@ -257,16 +257,13 @@ Fin_Base1S        dB $FF
 ;-----------------------------------------------------------------------------
 
         ;Inicializacion de la pantalla LCD, Hardware
-        movb #tTimer20uS,Timer20uS
-        movb #tTimer260uS,Timer260uS
-        movb #tTimer40uS,Timer40uS
-        Movb #tTimer1mS,Timer1mS
-        movw #SendLCD_Est1,EstPres_SendLCD
         movb #$FF,DDRK
+        movb #tTimer20uS,Timer20uS
+        movb #tTimer1mS,Timer1mS
+        movw #SendLCD_Est1,EstPres_SendLCD
         movw #IniDsp,Punt_LCD
         ldy Punt_LCD
         Clr Banderas_2
-        bset Banderas_2,RS
         Cli
 
 Send_IniDsp:
@@ -332,18 +329,7 @@ for:    movb #$FF,1,x+
         Movw #PantallaMUX_Est1,Est_Pres_PantallaMUX ;init est1 pantallamux
         Movw #TCM_Est1,Est_Pres_TCM
 
-;prueba eliminando tarea conversion:
-        ;movb #$06,Dsp1
-        ;movb #$6D,Dsp2
-        ;movb #$7D,Dsp3
-        ;movb #$07,Dsp4
         movb #90,Brillo
-; Fin de prueba
-
-;segunda prueba para ver si la tarea conversion funciona
-;        movb #$60,BIN2
-;        movb #$60,BIN1
-;fin prueba anterior
 
 Despachador_Tareas
 
@@ -379,7 +365,7 @@ SendLCD_Est1:
                         lsra
                         staa PORTK
 
-                        brset Banderas_2,RS,ComandoLCD_Est1
+                        brclr Banderas_2,RS,ComandoLCD_Est1
                         bset PORTK,$01
                         bra No_ComandoLCD_Est1
 ComandoLCD_Est1:
@@ -405,7 +391,7 @@ SendLCD_Est2:
                         lsla
                         staa PORTK
 
-                        brset Banderas_2,RS,ComandoLCD_Est2
+                        brclr Banderas_2,RS,ComandoLCD_Est2
                         bset PORTK,$01
 
                         bra No_ComandoLCD_Est2

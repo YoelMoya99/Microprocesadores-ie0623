@@ -94,10 +94,10 @@ IniDsp:                 dB $28 ;Function set
                         dB $28 ;Function set 2
                         dB $06 ;Entry Mode set
                         dB $0C ;Display ON, Cursor OFF, No Blinking
-                        dB EOB ;End Of table
+                        dB $FF ;End Of table
 
 Punt_LCD:               ds 2
-ChardLCD:               ds 1
+CharLCD:                ds 1
 Msg_L1:                 ds 2
 Msg_L2:                 ds 2
 EstPres_SendLCD:        ds 2
@@ -137,6 +137,11 @@ ShortP:                 EQU $01      ;Bandera para short press
 LongP:                  EQU $02      ;Bandera para long press
 ARRAY_OK:               EQU $10      ;Bandera para arreglo listo
 
+Banderas_2:             ds 1
+RS:                     EQU $01
+LCD_OK:                 EQU $02
+FinSendLCD:             EQU $04
+Second_Line:            EQU $08
 
 ;---------------------- Generales ----------------------------------
                         org $1080
@@ -145,12 +150,10 @@ ARRAY_OK:               EQU $10      ;Bandera para arreglo listo
 tTimerLDTst:            EQU 1     ;Tiempo de parpadeo de LED testigo en segundos
 tMinutosTCM:            EQU 2
 tSegundosTCM:           EQU 20
-MinutosTCM:             ds 1
-BienvenidaLCD:          FCC ""
-                        FCC ""
+BienvenidaLD:           EQU $55
+TransitorioLD:          EQU $AA
 
-TransitorioLCD:         FCC ""
-                        FCC ""
+MinutosTCM:             ds 1
 Est_Pres_TCM:           ds 2
 
 
@@ -166,8 +169,13 @@ Teclas:         dB $01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$0E,$0B ;Tabla TCL (M
 
 
 ;---------------------- Mensajes -----------------------------------
-;------------------------------------------------------------------
-
+                        org $1200
+;-------------------------------------------------------------------
+Mensaje_BienvenidaL1:        FCC "ESCUELA DE"
+Mensaje_BienvenidaL2:        FCC "ING.ELECTRICA"
+                        
+Mensaje_TransitorioL1:  FCC "uPROCESADORES"
+Mensaje_TransitorioL2:        FCC "IE0263"
 
 ;===============================================================================
 ;                              TABLA DE TIMERS
@@ -175,23 +183,25 @@ Teclas:         dB $01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$0E,$0B ;Tabla TCL (M
                                 Org $1500
 Tabla_Timers_BaseT:
 
-Timer20uS        ds 1   ;Timer 20uS con base tiempo de interrupcion
-
-Fin_BaseT        db $FF
+Timer20uS       ds 1   ;Timer 20uS con base tiempo de interrupcion
+Timer40uS       ds 1
+Timer260uS      ds 1
+Fin_BaseT       db $FF
 
 Tabla_Timers_Base20uS:
 
-Timer1mS         ds 1    ;Timer 1mS para generar la base tiempo 1mS
-Counter_Ticks    ds 1
+Timer1mS        ds 1    ;Timer 1mS para generar la base tiempo 1mS
+Counter_Ticks   ds 1
 
 Fin_Base20uS:    db $FF
 
 Tabla_Timers_Base1mS:
 
-Timer10mS:       ds 1    ;Timer para generar la base de tiempo 10 mS
-TimerDigito:     ds 1    ;Timer de digito de pantalla MUX
-Timer_RebPB:     ds 1    ;Timer supresion rebotes Leer PB
-Timer_RebTCL:    ds 1    ;Timer de supresion de rebotes teclado
+Timer10mS       ds 1    ;Timer para generar la base de tiempo 10 mS
+Timer2mS        ds 1
+TimerDigito     ds 1    ;Timer de digito de pantalla MUX
+Timer_RebPB     ds 1    ;Timer supresion rebotes Leer PB
+Timer_RebTCL    ds 1    ;Timer de supresion de rebotes teclado
 
 
 Fin_Base1mS      dB $FF
@@ -213,7 +223,7 @@ Tabla_Timers_Base1S:
 
 Timer_LED_Testigo ds 1  ;Timer para parpadeo de led testigo
 Timer_LP          ds 1  ;Timer para long press
-SegundosTCM          ds 1
+SegundosTCM       ds 1
 Fin_Base1S        dB $FF
 
 ;===============================================================================
@@ -245,6 +255,51 @@ Fin_Base1S        dB $FF
         addd #480        ;Interrupcion configurada para 20uS
         std TC4
 ;-----------------------------------------------------------------------------
+
+	;Inicializacion de la pantalla LCD, Hardware
+        movb #tTimer20uS,Timer20uS
+        ;movb #tTimer260uS,Timer260uS
+        ;movb #tTimer40uS,Timer40uS
+        Movb #tTimer1mS,Timer1mS
+        movw #SendLCD_Est1,EstPres_SendLCD
+        movb #$FF,DDRK
+        movb #IniDsp,Punt_LCD
+        ldy Punt_LCD
+        Clr Banderas_2
+	;bclr Banderas_2,RS
+        ;bclr Banderas_2,Second_Line
+        ;bclr Banderas_2,LCD_OK
+        Cli
+
+Send_IniDsp:
+        ;ldy Punt_LCD
+        movb 1,y+,CharLCD
+        ;sty Punt_LCD
+        ;ldaa CharLCD
+        ;cmpa #$FF
+        ;beq Send_Clear
+        brset CharLCD,$FF,Send_Clear
+Loop1_Tarea_SendLCD:
+        jsr Tarea_SendLCD
+        brclr Banderas_2,FinSendLCD,Loop1_Tarea_SendLCD
+        bclr Banderas_2,FinSendLCD
+        bra Send_IniDsp
+
+Send_Clear:
+        movb #Clear_LCD,CharLCD
+Loop2_Tarea_SendLCD:
+        jsr Tarea_SendLCD
+        brclr Banderas_2,FinSendLCD,Loop2_Tarea_SendLCD
+
+        bclr Banderas_2,FinSendLCD
+
+        movb #tTimer2mS,Timer2mS
+Dos_mS_Wait:
+        tst Timer2mS
+        nop
+        nop
+        bne Dos_mS_Wait
+
 ;===============================================================================
 ;                           PROGRAMA PRINCIPAL
 ;===============================================================================
@@ -261,7 +316,7 @@ Fin_Base1S        dB $FF
         movb #$00,Cont_TCL ;Inicializa offset en cero
         movb #$00,Patron   ;Inicializa patron del lectura teclado
         movb #1,Cont_Dig   ;Digito de multiplexacion
-        movb #$55,LEDS     ;Inicializa leds en pares
+        movb #BienvenidaLD,LEDS     ;Inicializa leds en pares
 
         ldx #Num_Array     ;Inicializa el array con FF para los primeros
         movb #$09,Cont_TCL ;9 valores.
@@ -273,8 +328,8 @@ for:    movb #$FF,1,x+
         Lds #$3BFF                          ;Define puntero de pila
         Cli                                 ;Habilita interrupciones
         Clr Banderas_1                        ;Limpia las banderas
-        ;Clr Banderas_2
-	Movw #LeerPB_Est1,Est_Pres_LeerPB   ;Inicializa estado1 LeerPB
+        Clr Banderas_2
+        Movw #LeerPB_Est1,Est_Pres_LeerPB   ;Inicializa estado1 LeerPB
         Movw #Teclado_Est1,Est_Pres_TCL     ;Inicializa estado1 Teclado
         Movw #PantallaMUX_Est1,Est_Pres_PantallaMUX ;init est1 pantallamux
         Movw #TCM_Est1,Est_Pres_TCM
@@ -294,6 +349,9 @@ for:    movb #$FF,1,x+
 
 Despachador_Tareas
 
+        ;brset Banderas_2,LCD_OK,No_Msg
+        ;Jsr Tarea_LCD
+No_Msg:
 
         Jsr Tarea_Led_Testigo
         Jsr Tarea_Conversion
@@ -302,9 +360,92 @@ Despachador_Tareas
         Jsr Tarea_Leer_PB
         Jsr Tarea_TCM
         Jsr Tarea_Borra_TCL
-        
+
         Bra Despachador_Tareas
-       
+
+;******************************************************************************
+;                            TAREA SEND LCD
+;******************************************************************************
+
+Tarea_SendLCD:
+                        ldx EstPres_SendLCD
+                        jsr 0,x
+                        rts
+
+;-------------------------- SendLCD_Est1 -------------------------------------
+
+SendLCD_Est1:
+                        ldaa #$F0
+                        anda CharLCD
+                        lsra
+                        lsra
+                        staa PORTK
+
+                        brclr Banderas_2,RS,ComandoLCD_Est1
+                        bset PORTK,$01
+                        bra No_ComandoLCD_Est1
+ComandoLCD_Est1:
+                        bclr PORTK,$01
+No_ComandoLCD_Est1:
+                        bset PORTK,$02
+                        movb #tTimer260uS,Timer260uS
+                        movw #SendLCD_Est2,EstPres_SendLCD
+
+Fin_SendLCD_Est1:        rts
+
+;----------------------- SendLCD_Est2 ----------------------------------------
+
+SendLCD_Est2:
+                        tst Timer260uS
+                        bne Fin_SendLCD_Est2
+                        bset PORTB,$08
+                        bclr PORTK,$02
+
+                        ldaa #$0F
+                        anda CharLCD
+                        lsla
+                        lsla
+                        staa PORTK
+
+                        brset Banderas_2,RS,ComandoLCD_Est2
+                        bset PORTK,$01
+
+                        bra No_ComandoLCD_Est2
+ComandoLCD_Est2:
+                        bclr PORTK,$01
+No_ComandoLCD_Est2:
+                        bset PORTK,$02
+                        movb #tTimer260uS,Timer260uS
+
+                        movw #SendLCD_Est3,EstPres_SendLCD
+
+Fin_SendLCD_Est2:
+			rts
+
+;---------------------- SendLCD_Est3 -----------------------------------------
+
+SendLCD_Est3:
+                        tst Timer260uS
+                        bne Fin_SendLCD_Est3
+
+                        bclr PORTK,$02
+                        movb #tTimer40uS,Timer40uS
+                        movw #SendLCD_Est4,EstPres_SendLCD
+
+Fin_SendLCD_Est3:        rts
+
+;---------------------- SendLCD_Est4 -----------------------------------------
+
+SendLCD_Est4:
+                        tst Timer40uS
+                        bne Fin_SendLCD_Est4
+
+                        bset Banderas_2,FinSendLCD
+
+                        movw #SendLCD_Est1,EstPres_SendLCD
+                        
+Fin_SendLCD_Est4:        rts
+
 ;******************************************************************************
 ;                                   TAREA TCM
 ;******************************************************************************
@@ -321,7 +462,7 @@ TCM_Est1:
                         movb #tMinutosTCM,BIN2
                         movb #tSegundosTCM,BIN1
                         brclr Banderas_1,ShortP,Fin_TCM_Est1
-                        movb #$AA,LEDS
+                        movb #TransitorioLD,LEDS
                         movw #TCM_Est2,Est_Pres_TCM
 
 Fin_TCM_Est1:                rts
@@ -343,6 +484,8 @@ TCM_Est2:
 
                         movb #tMinutosTCM,BIN2
                         movb #tSegundosTCM,BIN1
+
+                        movb #BienvenidaLD,LEDS
 
                         movw #TCM_Est1,Est_Pres_TCM
                         bra Fin_TCM_Est2

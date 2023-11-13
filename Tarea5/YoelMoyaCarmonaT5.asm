@@ -132,10 +132,10 @@ MaskPB:                 EQU $01
 ;Falta cambiar nombres en el resto de codigo banderas para banderas_1
 ;Y falta cambiar arrayok para $10, asi como agregar el segundo banderas
 
-Banderas:               ds 1     
+Banderas_1:               ds 1
 ShortP:                 EQU $01      ;Bandera para short press
 LongP:                  EQU $02      ;Bandera para long press
-ARRAY_OK:               EQU $04      ;Bandera para arreglo listo
+ARRAY_OK:               EQU $10      ;Bandera para arreglo listo
 
 
 ;---------------------- Generales ----------------------------------
@@ -272,8 +272,9 @@ for:    movb #$FF,1,x+
 
         Lds #$3BFF                          ;Define puntero de pila
         Cli                                 ;Habilita interrupciones
-        Clr Banderas                        ;Limpia las banderas
-        Movw #LeerPB_Est1,Est_Pres_LeerPB   ;Inicializa estado1 LeerPB
+        Clr Banderas_1                        ;Limpia las banderas
+        ;Clr Banderas_2
+	Movw #LeerPB_Est1,Est_Pres_LeerPB   ;Inicializa estado1 LeerPB
         Movw #Teclado_Est1,Est_Pres_TCL     ;Inicializa estado1 Teclado
         Movw #PantallaMUX_Est1,Est_Pres_PantallaMUX ;init est1 pantallamux
         Movw #TCM_Est1,Est_Pres_TCM
@@ -319,7 +320,7 @@ TCM_Est1:
                         movb #tSegundosTCM,SegundosTCM
                         movb #tMinutosTCM,BIN2
                         movb #tSegundosTCM,BIN1
-                        brclr Banderas,ShortP,Fin_TCM_Est1
+                        brclr Banderas_1,ShortP,Fin_TCM_Est1
                         movb #$AA,LEDS
                         movw #TCM_Est2,Est_Pres_TCM
 
@@ -328,7 +329,7 @@ Fin_TCM_Est1:                rts
 ;----------------------------- TCM Est2 --------------------------------------
 
 TCM_Est2:
-			movb MinutosTCM,BIN2
+                        movb MinutosTCM,BIN2
                         movb SegundosTCM,BIN1
 
                         tst SegundosTCM
@@ -535,7 +536,7 @@ Borrar_Valor:           dec Cont_TCL         ;Si se tiene que borrar una tecla
                         bra Reestablecer
 
 Finalizar_Array:        bclr Cont_TCL,#$FF     ;Para finalizar arreglo se lev-
-                        bset Banderas,ARRAY_OK ;anta bandera y borra offset
+                        bset Banderas_1,ARRAY_OK ;anta bandera y borra offset
 
 Reestablecer:           movw #Teclado_Est1,Est_Pres_TCL ;siempre se regresa al
                         bset Tecla,#$FF                 ;1st estado y se borran
@@ -593,7 +594,7 @@ LeerPB_Est3:
                         movw #LeerPB_Est4,Est_Pres_LeerPB
                         bra PBEst3_Retornar
                         
-Label_31:               bset Banderas,ShortP
+Label_31:               bset Banderas_1,ShortP
                         movw #LeerPB_Est1,Est_Pres_LeerPB
                         
 PBEst3_Retornar:        rts
@@ -605,11 +606,11 @@ LeerPB_Est4:
                         bne Label_Short
                         
                         brclr PortPB,MaskPb,PBEst4_Retornar
-                        bset Banderas,LongP
+                        bset Banderas_1,LongP
                         bra PBEst4_State1
                         
 Label_Short:            brclr PortPB,MaskPB,PBEst4_Retornar
-                        bset Banderas,ShortP
+                        bset Banderas_1,ShortP
 
 PBest4_State1:          movw #LeerPB_Est1,Est_Pres_LeerPB
 
@@ -638,13 +639,13 @@ Tarea_Conversion:
 ;*****************************************************************************
 
 Tarea_Borra_TCL:
-                        BrSet Banderas,ShortP,ON
-                        BrSet Banderas,LongP,OFF
+                        BrSet Banderas_1,ShortP,ON
+                        BrSet Banderas_1,LongP,OFF
                         Bra FIN_Led
-ON:                     BClr Banderas,ShortP
+ON:                     BClr Banderas_1,ShortP
                         Bset PORTB,$01
                         Bra FIN_Led
-OFF:                    BClr Banderas,LongP
+OFF:                    BClr Banderas_1,LongP
                         BClr PORTB,$01
                         
                         ldx #Num_Array      ;se utiliza el mismo ciclo
@@ -653,7 +654,7 @@ forCLR:                 movb #$FF,1,x+      ;limpiar el arreglo. Y se agrega
                         dec Cont_TCL        ;poner la bandera array en cero.
                         bne forCLR
                         movb #$00,Cont_TCL
-                        bclr Banderas,ARRAY_OK
+                        bclr Banderas_1,ARRAY_OK
 
 FIN_Led:                Rts
 

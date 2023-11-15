@@ -171,11 +171,15 @@ Teclas:         dB $01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$0E,$0B ;Tabla TCL (M
 ;---------------------- Mensajes -----------------------------------
                         org $1200
 ;-------------------------------------------------------------------
-Mensaje_BienvenidaL1:        FCC "ESCUELA DE"
-Mensaje_BienvenidaL2:        FCC "ING.ELECTRICA"
-                        
-Mensaje_TransitorioL1:  FCC "uPROCESADORES"
-Mensaje_TransitorioL2:        FCC "IE0263"
+Mensaje_BienvenidaL1:   FCC "   ESCUELA DE   "
+                        dB EOB
+Mensaje_BienvenidaL2:   FCC " ING. ELECTRICA "
+                        db EOB
+
+Mensaje_TransitorioL1:  FCC "  uPROCESADORES "
+                        dB EOB
+Mensaje_TransitorioL2:  FCC "     IE0263     "
+                        dB EOB
 
 ;===============================================================================
 ;                              TABLA DE TIMERS
@@ -328,13 +332,17 @@ for:    movb #$FF,1,x+
         Movw #Teclado_Est1,Est_Pres_TCL     ;Inicializa estado1 Teclado
         Movw #PantallaMUX_Est1,Est_Pres_PantallaMUX ;init est1 pantallamux
         Movw #TCM_Est1,Est_Pres_TCM
+        Movw #TareaLCD_Est1,EstPres_TareaLCD
 
         movb #90,Brillo
+        movw #Mensaje_BienvenidaL1,Msg_L1
+	movw #Mensaje_BienvenidaL2,Msg_L2
+        bclr Banderas_2,LCD_OK
 
 Despachador_Tareas
 
-        ;brset Banderas_2,LCD_OK,No_Msg
-        ;Jsr Tarea_LCD
+        brset Banderas_2,LCD_OK,No_Msg
+        Jsr Tarea_LCD
 No_Msg:
 
         Jsr Tarea_Led_Testigo
@@ -346,6 +354,66 @@ No_Msg:
         Jsr Tarea_Borra_TCL
 
         Bra Despachador_Tareas
+
+;******************************************************************************
+;                             TAREA LCD
+;******************************************************************************
+Tarea_LCD:
+                        ldx EstPres_TareaLCD
+                        jsr 0,x
+                        rts
+
+;---------------------------- TareaLCD Est1 ----------------------------------
+
+TareaLCD_Est1:
+                        bclr Banderas_2,FinSendLCD
+                        bclr Banderas_2,RS
+
+                        brset Banderas_2,Second_Line,Load_Second_Line
+Load_First_Line:
+                        movb #ADD_L1,CharLCD
+                        movw Msg_L1,Punt_LCD
+                        bra Load_TLCD_Est2
+Load_Second_LIne:
+                        movb #ADD_L2,CharLCD
+                        movw Msg_L2,Punt_LCD
+Load_TLCD_Est2:
+                        jsr Tarea_SendLCD
+
+                        movw #TareaLCD_Est2,EstPres_TareaLCD
+
+                        rts
+
+;---------------------- TareaLCD Est2 ----------------------------------------
+TareaLCD_Est2:
+                        brclr Banderas_2,FinSendLCD,Call_Send_LCD
+
+                        bclr Banderas_2,FinSendLCD
+                        bset Banderas_2,RS
+
+                        ldy Punt_LCD
+                        movb 1,y+,CharLCD
+                        sty Punt_LCD
+
+                        brset CharLCD,EOB,ToggleLine_EndMsg
+
+Call_Send_LCD:
+                        jsr Tarea_SendLCD
+                        bra Fin_TareaLCD_Est2
+
+ToggleLine_EndMsg:
+                        brset Banderas_2,Second_Line,EndMsg 
+                        
+                        bset Banderas_2,Second_Line
+                        bra Load_TareaLCD_Est1
+EndMsg:
+                        bclr Banderas_2,Second_Line
+                        bset Banderas_2,LCD_OK
+                        
+Load_TareaLCD_Est1:
+                        movw #TareaLCD_Est1,EstPres_TareaLCD
+
+Fin_TareaLCD_Est2:        rts
 
 ;******************************************************************************
 ;                            TAREA SEND LCD
@@ -445,9 +513,18 @@ TCM_Est1:
                         movb #tSegundosTCM,SegundosTCM
                         movb #tMinutosTCM,BIN2
                         movb #tSegundosTCM,BIN1
+
+
+
                         brclr Banderas_1,ShortP,Fin_TCM_Est1
                         movb #TransitorioLD,LEDS
+
+                        movw #Mensaje_TransitorioL1,Msg_L1
+                        movw #Mensaje_TransitorioL2,Msg_L2
+                        bclr Banderas_2,LCD_OK
+                        
                         movw #TCM_Est2,Est_Pres_TCM
+                        
 
 Fin_TCM_Est1:                rts
 
@@ -455,8 +532,10 @@ Fin_TCM_Est1:                rts
 
 TCM_Est2:
                         movb MinutosTCM,BIN2
-                        movb SegundosTCM,BIN1
-
+                        ldaa SegundosTCM
+                        deca
+                        staa BIN1
+                        
                         tst SegundosTCM
                         bne Fin_TCM_Est2
 
@@ -470,15 +549,20 @@ TCM_Est2:
                         movb #tSegundosTCM,BIN1
 
                         movb #BienvenidaLD,LEDS
+                        movw #Mensaje_BienvenidaL1,Msg_L1
+                        movw #Mensaje_BienvenidaL2,Msg_L2                        
+                        bclr Banderas_2,LCD_OK
 
                         movw #TCM_Est1,Est_Pres_TCM
                         bra Fin_TCM_Est2
 
 Continue_TCM:
                         dec MinutosTCM
-                        movb #59,SegundosTCM
+                        movb #60,SegundosTCM
 
-Fin_TCM_Est2:           rts
+
+Fin_TCM_Est2:
+			rts
 ;******************************************************************************
 ;                               TAREA PANTALLA MUX
 ;******************************************************************************

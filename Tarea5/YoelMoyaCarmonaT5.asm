@@ -129,10 +129,7 @@ MaskPB:                 EQU $01
                         org $1070
 ;-------------------------------------------------------------------
 
-;Falta cambiar nombres en el resto de codigo banderas para banderas_1
-;Y falta cambiar arrayok para $10, asi como agregar el segundo banderas
-
-Banderas_1:               ds 1
+Banderas_1:             ds 1
 ShortP:                 EQU $01      ;Bandera para short press
 LongP:                  EQU $02      ;Bandera para long press
 ARRAY_OK:               EQU $10      ;Bandera para arreglo listo
@@ -286,15 +283,17 @@ Loop1_Tarea_SendLCD:
         bra Send_IniDsp
 
 Send_Clear:
-        movb #Clear_LCD,CharLCD
+	movb #Clear_LCD,CharLCD
+	
 Loop2_Tarea_SendLCD:
-        jsr Tarea_SendLCD
+
+	jsr Tarea_SendLCD
         
         brclr Banderas_2,FinSendLCD,Loop2_Tarea_SendLCD
-
+        
         bclr Banderas_2,FinSendLCD
-
         movb #tTimer2mS,Timer2mS
+        
 Dos_mS_Wait:
         tst Timer2mS
         bne Dos_mS_Wait
@@ -336,7 +335,7 @@ for:    movb #$FF,1,x+
 
         movb #90,Brillo
         movw #Mensaje_BienvenidaL1,Msg_L1
-	movw #Mensaje_BienvenidaL2,Msg_L2
+        movw #Mensaje_BienvenidaL2,Msg_L2
         bclr Banderas_2,LCD_OK
 
 Despachador_Tareas
@@ -413,7 +412,7 @@ EndMsg:
 Load_TareaLCD_Est1:
                         movw #TareaLCD_Est1,EstPres_TareaLCD
 
-Fin_TareaLCD_Est2:        rts
+Fin_TareaLCD_Est2:      rts
 
 ;******************************************************************************
 ;                            TAREA SEND LCD
@@ -459,16 +458,15 @@ SendLCD_Est2:
                         lsla
                         staa PORTK
 
-                        brclr Banderas_2,RS,ComandoLCD_Est2
-                        bset PORTK,$01
+			brclr Banderas_2,RS,ComandoLCD_Est2
 
+			bset PORTK,$01
                         bra No_ComandoLCD_Est2
 ComandoLCD_Est2:
                         bclr PORTK,$01
 No_ComandoLCD_Est2:
                         bset PORTK,$02
                         movb #tTimer260uS,Timer260uS
-
                         movw #SendLCD_Est3,EstPres_SendLCD
 
 Fin_SendLCD_Est2:
@@ -484,19 +482,17 @@ SendLCD_Est3:
                         movb #tTimer40uS,Timer40uS
                         movw #SendLCD_Est4,EstPres_SendLCD
 
-Fin_SendLCD_Est3:        rts
+Fin_SendLCD_Est3:       rts
 
 ;---------------------- SendLCD_Est4 -----------------------------------------
 
 SendLCD_Est4:
                         tst Timer40uS
                         bne Fin_SendLCD_Est4
-
                         bset Banderas_2,FinSendLCD
-
                         movw #SendLCD_Est1,EstPres_SendLCD
                         
-Fin_SendLCD_Est4:        rts
+Fin_SendLCD_Est4:       rts
 
 ;******************************************************************************
 ;                                   TAREA TCM
@@ -513,8 +509,6 @@ TCM_Est1:
                         movb #tSegundosTCM,SegundosTCM
                         movb #tMinutosTCM,BIN2
                         movb #tSegundosTCM,BIN1
-
-
 
                         brclr Banderas_1,ShortP,Fin_TCM_Est1
                         movb #TransitorioLD,LEDS
@@ -559,10 +553,8 @@ TCM_Est2:
 Continue_TCM:
                         dec MinutosTCM
                         movb #60,SegundosTCM
-
-
 Fin_TCM_Est2:
-			rts
+                        rts
 ;******************************************************************************
 ;                               TAREA PANTALLA MUX
 ;******************************************************************************
@@ -606,12 +598,14 @@ Display_1:
 Display_2:
                         bclr PTP,$02
                         movb Dsp2,PORTB
+                        bset PORTB,$80
                         inc Cont_Dig
                         bra Cambio_Estado
 Display_3:
                         bclr PTP,$04
                         movb Dsp3,PORTB
-                        inc Cont_Dig
+                        bset PORTB,$80
+			inc Cont_Dig
                         bra Cambio_Estado
 Display_4:
                         bclr PTP,$08

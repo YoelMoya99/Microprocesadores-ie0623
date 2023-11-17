@@ -1,0 +1,46 @@
+<mxfile host="Electron" modified="2023-11-16T22:14:48.890Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.2 Chrome/114.0.5735.289 Electron/25.9.4 Safari/537.36" etag="imYNpdydc7VWXbuXUXsu" version="22.1.2" type="device">
+  <diagram name="Página-1" id="fUxG3cpbj3fK1cQl_8jp">
+    <mxGraphModel dx="880" dy="524" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="DTqcUHTiA8295AhlB3kP-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="DTqcUHTiA8295AhlB3kP-1" target="DTqcUHTiA8295AhlB3kP-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DTqcUHTiA8295AhlB3kP-1" value="Output Compare&lt;br&gt;Config Hardware" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.terminator;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="364" y="30" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="DTqcUHTiA8295AhlB3kP-2" value="$3E66" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="480" y="45" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="DTqcUHTiA8295AhlB3kP-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="DTqcUHTiA8295AhlB3kP-3" target="DTqcUHTiA8295AhlB3kP-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DTqcUHTiA8295AhlB3kP-3" value="TSCR1 \(\leftarrow\)&amp;nbsp;$90&lt;br&gt;TSCR2 \(\leftarrow\) $00&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="354" y="130" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="DTqcUHTiA8295AhlB3kP-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="DTqcUHTiA8295AhlB3kP-4" target="DTqcUHTiA8295AhlB3kP-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DTqcUHTiA8295AhlB3kP-4" value="TIOS \(\leftarrow\) $10&lt;br&gt;TIE \(\leftarrow\) $10&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="354" y="230" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="DTqcUHTiA8295AhlB3kP-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="DTqcUHTiA8295AhlB3kP-5" target="DTqcUHTiA8295AhlB3kP-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DTqcUHTiA8295AhlB3kP-5" value="TCTL1 \(\leftarrow\) $01" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="354" y="340" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="DTqcUHTiA8295AhlB3kP-6" value="RR1 \(\leftarrow\) (TCNT)&lt;br&gt;RR1 \(\leftarrow\) (RR1) + 480&lt;br&gt;TC4 \(\leftarrow\) (TC4)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="354" y="450" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="DTqcUHTiA8295AhlB3kP-11" value="END" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.terminator;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="364" y="550" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="DTqcUHTiA8295AhlB3kP-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="DTqcUHTiA8295AhlB3kP-6" target="DTqcUHTiA8295AhlB3kP-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

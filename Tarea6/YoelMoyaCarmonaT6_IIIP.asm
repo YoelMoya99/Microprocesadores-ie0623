@@ -178,6 +178,11 @@ Mensaje_TransitorioL1:  FCC "  uPROCESADORES "
 Mensaje_TransitorioL2:  FCC "     IE0263     "
                         dB EOB
 
+MSG_Volumen:            dB $0C
+ 			FCC "VOLUMEN CALCULADO: ("
+ASCII_Volumen:                ds 2
+                        FCC ")"
+                        dB EOB
 
 ;---------------------------- CAD (ATD) ---------------------------------
                                 org $1500
@@ -187,6 +192,10 @@ NivelProm:                dS 2
 Nivel:                    ds 1
 Volumen:                  ds 1
 Est_Pres_ATD:             ds 2
+tTimerTerminal:                  EQU 1
+Est_Pres_Terminal:          ds 2
+MSG_ptr:                ds 2
+
 
 ;===============================================================================
 ;                              TABLA DE TIMERS
@@ -236,6 +245,8 @@ Tabla_Timers_Base1S:
 Timer_LED_Testigo ds 1  ;Timer para parpadeo de led testigo
 Timer_LP          ds 1  ;Timer para long press
 SegundosTCM       ds 1
+TimerTerminal     ds 1
+Timer1111         ds 1
 Fin_Base1S        dB $FF
 
 
@@ -323,6 +334,15 @@ Tiempo_De_Encendido:
         movb #$20,ATD0CTL3 ;4 conversiones x ciclo, No FIFO
         movb #$10,ATD0CTL4 ;Prescaler 16 para 705kHz
         
+;--------------------- Inicializacion Terminal SCI ---------------------------
+
+        movb #$00,SC1BDH
+        movb #$27,SC1BDL
+        movb #$00,SC1CR1
+        movb #$08,SC1CR2
+        ldaa SC1CR1
+        movb #$00,SC1DRL
+
 ;===============================================================================
 ;                           PROGRAMA PRINCIPAL
 ;===============================================================================
@@ -358,11 +378,14 @@ for:    movb #$FF,1,x+
         Movw #TCM_Est1,Est_Pres_TCM
         Movw #TareaLCD_Est1,EstPres_TareaLCD
         Movw #Tarea_ATD_Est1,Est_Pres_ATD
+        Movw #Tarea_Terminal_Est1,Est_Pres_Terminal
 
         movb #90,Brillo
         movw #Mensaje_BienvenidaL1,Msg_L1
         movw #Mensaje_BienvenidaL2,Msg_L2
         bclr Banderas_2,LCD_OK
+        
+        movw #$3030,ASCII_Volumen
 
 Despachador_Tareas
 
@@ -379,9 +402,80 @@ Despachador_Tareas
 ;        Jsr Tarea_Borra_TCL
 
         Jsr Tarea_ATD
+        ;Jsr Tarea_Unidad_Controladora
+        Jsr Tarea_Terminal
 ;        Jsr Tarea_Terminal
         
         Bra Despachador_Tareas
+
+;******************************************************************************
+;                             TAREA Unidad Controladora
+;******************************************************************************
+
+Tarea_Unidad_Controladora:
+                        tst Timer1111
+                        bne Fin_UC
+                        ldab Volumen
+                        lsrb
+                        lsrb
+                        lsrb
+                        lsrb
+                        addb #$30
+                        ldaa #$30
+                        std ASCII_Volumen
+                        movb #1,Timer1111
+Fin_UC:
+                        rts
+
+;******************************************************************************
+;                             TAREA TERMINAL
+;******************************************************************************
+
+Tarea_Terminal:
+                        ldx Est_Pres_Terminal
+                        jsr 0,x
+                        rts
+
+;------------------------- Tarea_Terminal_Est1 -----------------------------
+Tarea_Terminal_Est1:
+                        tst TimerTerminal
+                        bne Fin_Tarea_Terminal_Est1
+
+                        movb #tTimerTerminal,TimerTerminal
+                        movb #$08,SC1CR2
+                        ldaa SC1CR1
+                        movb #$00,SC1DRL
+                        movw #Tarea_Terminal_Est2,Est_Pres_Terminal
+                        bset PORTB,$01
+                        inc ASCII_Volumen
+                        
+Fin_Tarea_Terminal_Est1:
+                        rts
+
+;----------------------- Tarea_Terminal_Est2 ----------------------------
+Tarea_Terminal_Est2:
+                        brclr SC1SR1,$80,Fin_Tarea_Terminal_Est2
+
+                        ldaa SC1SR1
+                        ldx MSG_ptr
+                        ldaa 1,x+
+                        
+                        cmpa #EOB
+                        beq Final_Trama
+
+                        staa SC1DRL
+                        stx MSG_ptr
+                        
+                        bra Fin_Tarea_Terminal_Est2
+
+Final_Trama:                
+                        bclr SC1CR2,$08
+                        movw #Tarea_Terminal_Est1,Est_Pres_Terminal
+                        movw #MSG_Volumen,MSG_ptr
+                        bclr PORTB,$01
+
+Fin_Tarea_Terminal_Est2:
+                        rts
 
 ;******************************************************************************
 ;                             TAREA ATD

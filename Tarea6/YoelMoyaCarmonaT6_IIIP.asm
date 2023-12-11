@@ -100,6 +100,11 @@ ADD_L2:                 EQU $C0
                         org $1070
 ;-------------------------------------------------------------------
 
+Banderas_1:             ds 1
+Prcnt_15:               EQU $01
+Prcnt_90:               EQU $02
+Mensage:                EQU $04
+Clear:                  EQU $08 
 
 Banderas_2:             ds 1
 RS:                     EQU $01
@@ -128,6 +133,11 @@ SEGMENT:        dB $3F,$06,$5B,$4F,$66,$6D,$7D,$07,$7F,$6F ;Tabla codigos segmen
 ;---------------------- Mensajes -----------------------------------
                         org $1200
 ;-------------------------------------------------------------------
+CR:                        EQU $0D
+LF:                        EQU $0A
+FF:                        EQU $0C
+BS:                           EQU $08
+
 Mensaje_BienvenidaL1:   FCC "   ESCUELA DE   "
                         dB EOB
 Mensaje_BienvenidaL2:   FCC " ING. ELECTRICA "
@@ -138,12 +148,37 @@ Mensaje_TransitorioL1:  FCC "  uPROCESADORES "
 Mensaje_TransitorioL2:  FCC "     IE0263     "
                         dB EOB
 
-MSG_Volumen:            dB $0C
-                         FCC "VOLUMEN CALCULADO: ("
-ASCII_Volumen:                ds 2
-                        FCC ")"
+MSG_Encabezado:         dB FF
+                        FCC "       Universidad de Costa Rica"
+                        dB CR,LF
+                        FCC "     Escuela de Ingenieria Electrica"
+                        dB CR,LF
+                        FCC "           Microprocesadores"
+                        dB CR,LF
+                        FCC "                IE0623"
+                        dB CR,LF,CR,LF 
                         dB EOB
 
+MSG_Normal:             db CR
+                        FCC "VOLUMEN CALCULADO: ("
+ASCII_Volumen:          ds 2
+                        FCC ")"
+                        dB EOB
+                        
+MSG_Tanq_lleno:                dB CR,LF,CR,LF
+                        FCC "Vaciando Tanque, Bomba Apagada"
+                        dB CR,BS,CR,BS,CR
+                        db EOB
+
+MSG_Alarma:                dB CR,LF,CR,LF
+                        FCC "Alarma: El Nivel Esta Bajo"
+                        dB CR,BS,CR,BS,CR
+                        db EOB
+
+MSG_Clear:              dB CR,LF,CR,LF
+                        FCC "                                  "
+                        dB CR,BS,CR,BS,CR
+                        db EOB
 ;---------------------------- CAD (ATD) ---------------------------------
                                 org $1500
 ;------------------------------------------------------------------------
@@ -152,9 +187,20 @@ NivelProm:                dS 2
 Nivel:                    ds 1
 Volumen:                  ds 1
 Est_Pres_ATD:             ds 2
-tTimerTerminal:                  EQU 1
-Est_Pres_Terminal:          ds 2
-MSG_ptr:                ds 2
+
+;------------------------------ SCI ---------------------------------
+                                org $1550
+;------------------------------------------------------------------------
+tTimerTerminal:           EQU 1
+Est_Pres_Terminal:        ds 2
+MSG_ptr:                  ds 2
+
+;------------------------------ UC ---------------------------------
+                                org $1600
+;------------------------------------------------------------------------
+tTimer_Tanqlleno:        EQU 5
+Est_Pres_UC:                ds 2
+Data_Terminal:                ds 2
 
 
 ;===============================================================================
@@ -201,6 +247,7 @@ Tabla_Timers_Base1S:
 
 Timer_LED_Testigo ds 1  ;Timer para parpadeo de led testigo
 TimerTerminal     ds 1
+Timer_Tanqlleno    ds 1
 Fin_Base1S        dB $FF
 
 
@@ -293,6 +340,18 @@ Tiempo_De_Encendido:
         movb #$08,SC1CR2
         ldaa SC1CR1
         movb #$00,SC1DRL
+        
+        Movw #Tarea_Terminal_Est1,Est_Pres_Terminal
+        movb #0,TimerTerminal
+        movw #MSG_Encabezado,MSG_ptr
+Init_Terminal:
+        jsr Tarea_Terminal
+        brset SC1CR2,$08,Init_Terminal
+
+;-------------------- Inicializacion de microrele ---------------------------
+        bset DDRE,$04
+
+
 
 ;===============================================================================
 ;                           PROGRAMA PRINCIPAL
@@ -318,6 +377,7 @@ Tiempo_De_Encendido:
         Movw #TareaLCD_Est1,EstPres_TareaLCD
         Movw #Tarea_ATD_Est1,Est_Pres_ATD
         Movw #Tarea_Terminal_Est1,Est_Pres_Terminal
+        Movw #Tarea_UC_Est1,Est_Pres_UC
 
         movb #90,Brillo
         movw #Mensaje_BienvenidaL1,Msg_L1
@@ -328,9 +388,9 @@ Tiempo_De_Encendido:
 
 Despachador_Tareas
 
-        brset Banderas_2,LCD_OK,No_Msg
-        Jsr Tarea_LCD
-No_Msg:
+;        brset Banderas_2,LCD_OK,No_Msg
+;        Jsr Tarea_LCD
+;No_Msg:
 
         Jsr Tarea_Led_Testigo
 ;        Jsr Tarea_Conversion
@@ -338,12 +398,87 @@ No_Msg:
 ;        Jsr Tarea_TCM
 
         Jsr Tarea_ATD
-        ;Jsr Tarea_Unidad_Controladora
+        Jsr Tarea_Unidad_Controladora
         Jsr Tarea_Terminal
 ;        Jsr Tarea_Terminal
-        
+
         Bra Despachador_Tareas
 
+
+;******************************************************************************
+;                             TAREA Unidad Controladora
+;******************************************************************************
+
+Tarea_Unidad_Controladora:
+                        ldx Est_Pres_UC
+                        jsr 0,x
+                        rts
+
+;------------------------- Tarea UC Est1 -------------------------------------
+Tarea_UC_Est1:
+                        Clr Banderas_1
+                        ldaa Nivel
+                        cmpa #2
+                        ble MenosDe15Porciento
+
+                        cmpa #12
+                        blo Fin_Tarea_UC_Est1 ;Menos del 90 porciento
+
+                        bset Banderas_1,Prcnt_90
+                        bset Banderas_1,Mensage
+                        movb tTimer_Tanqlleno,Timer_Tanqlleno
+                        movw #MSG_Tanq_lleno,Data_Terminal
+                        bra Fin_Tarea_UC_Est1
+                        
+MenosDe15Porciento:     bset Banderas_1,Prcnt_15
+                        bset Banderas_1,Mensage
+                        movw #MSG_Alarma,Data_Terminal
+                        
+Fin_Tarea_UC_Est1:
+                        movw #Tarea_UC_Est2,Est_Pres_UC
+                        rts
+
+;---------------------------- Tarea UC Est2 --------------------------------
+
+Tarea_UC_Est2:
+                        brset SC1CR2,$08,Fin_Tarea_UC_Est2
+                        brclr Banderas_1,Mensage,Go_To_UC_Est1
+
+                        bclr Banderas_1,Mensage
+                        movw Data_Terminal,MSG_ptr
+                        
+                        brclr Banderas_1,Clear,Go_To_UC_Est3
+Go_To_UC_Est1:
+                        movw #Tarea_UC_Est1,Est_Pres_UC
+                        bra Fin_Tarea_UC_Est2
+Go_To_UC_Est3:
+                        movw #Tarea_UC_Est3,Est_Pres_UC
+
+Fin_Tarea_UC_Est2:
+                        rts
+
+;---------------------- Tarea UC Est3 ----------------------------------------
+Tarea_UC_Est3:
+                        brset Banderas_1,Prcnt_15,Tst_30_Porciento
+                        
+                        tst Timer_Tanqlleno
+                        bne Fin_Tarea_UC_Est3
+                        bra Clear_Terminal
+
+Tst_30_Porciento:        ldaa Nivel
+                        cmpa #4
+                        blo Fin_Tarea_UC_Est3
+
+                        bclr Banderas_1,Prcnt_15
+
+Clear_Terminal:                bset Banderas_1,Mensage
+                        bset Banderas_1,Clear
+                        movw #MSG_Clear,Data_Terminal
+
+                        movw #Tarea_UC_Est2,Est_Pres_UC
+
+Fin_Tarea_UC_Est3:      rts
+                        
 ;******************************************************************************
 ;                             TAREA TERMINAL
 ;******************************************************************************
@@ -364,6 +499,7 @@ Tarea_Terminal_Est1:
                         movb #$00,SC1DRL
                         movw #Tarea_Terminal_Est2,Est_Pres_Terminal
                         bset PORTB,$01
+                        bset PORTE,$04
                         jsr Tarea_BIN_ASCII
                         
 Fin_Tarea_Terminal_Est1:
@@ -388,7 +524,7 @@ Tarea_Terminal_Est2:
 Final_Trama:                
                         bclr SC1CR2,$08
                         movw #Tarea_Terminal_Est1,Est_Pres_Terminal
-                        movw #MSG_Volumen,MSG_ptr
+                        movw #MSG_Normal,MSG_ptr
                         bclr PORTB,$01
 
 Fin_Tarea_Terminal_Est2:

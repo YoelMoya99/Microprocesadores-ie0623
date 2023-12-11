@@ -962,8 +962,7 @@ PBEst4_Retornar:        rts
 
 Tarea_BIN_ASCII:
 			ldaa Volumen
-
-			jsr BIN_BCD_MUXP
+			jsr BIN_BCD_General
 
 			ldaa BCD
 			ldab BCD
@@ -1020,11 +1019,11 @@ Calcula:
 
 Tarea_Conversion:
                         ldaa BIN1
-                        jsr BIN_BCD_MUXP
+                        jsr BIN_BCD_General
                         movb BCD,BCD1
 
                         ldaa BIN2
-                        jsr BIN_BCD_MUXP
+                        jsr BIN_BCD_General
                         movb BCD,BCD2
 
                         jsr BCD_7Seg
@@ -1056,9 +1055,9 @@ forCLR:                 movb #$FF,1,x+      ;limpiar el arreglo. Y se agrega
 FIN_Led:                Rts
 
 ;*****************************************************************************
-;                  SUB RUTINA GENERAL BIN BCD MUXP
+;                  SUB RUTINA GENERAL BIN BCD
 ;*****************************************************************************
-BIN_BCD_MUXP:
+BIN_BCD_General:
                         bclr BCD,$FF
                         movb #$05,Cont_BCD
                         lsla

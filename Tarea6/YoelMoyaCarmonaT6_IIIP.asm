@@ -409,25 +409,6 @@ Despachador_Tareas
         Bra Despachador_Tareas
 
 ;******************************************************************************
-;                             TAREA Unidad Controladora
-;******************************************************************************
-
-Tarea_Unidad_Controladora:
-                        tst Timer1111
-                        bne Fin_UC
-                        ldab Volumen
-                        lsrb
-                        lsrb
-                        lsrb
-                        lsrb
-                        addb #$30
-                        ldaa #$30
-                        std ASCII_Volumen
-                        movb #1,Timer1111
-Fin_UC:
-                        rts
-
-;******************************************************************************
 ;                             TAREA TERMINAL
 ;******************************************************************************
 
@@ -447,7 +428,7 @@ Tarea_Terminal_Est1:
                         movb #$00,SC1DRL
                         movw #Tarea_Terminal_Est2,Est_Pres_Terminal
                         bset PORTB,$01
-                        inc ASCII_Volumen
+                        jsr Tarea_BIN_ASCII
                         
 Fin_Tarea_Terminal_Est1:
                         rts
@@ -975,6 +956,31 @@ PBest4_State1:          movw #LeerPB_Est1,Est_Pres_LeerPB
 
 PBEst4_Retornar:        rts
 
+;*****************************************************************************
+;                               TAREA BIN ASCII
+;*****************************************************************************
+
+Tarea_BIN_ASCII:
+			ldaa Volumen
+
+			jsr BIN_BCD_MUXP
+
+			ldaa BCD
+			ldab BCD
+
+			andb #$0F
+			addb #$30
+
+			lsra
+			lsra
+			lsra
+			lsra
+
+			adda #$30
+
+			std ASCII_Volumen
+
+			rts
 
 ;*****************************************************************************
 ;                               TAREA Calcula

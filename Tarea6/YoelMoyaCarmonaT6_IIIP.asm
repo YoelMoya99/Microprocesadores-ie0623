@@ -165,19 +165,19 @@ ASCII_Volumen:          ds 2
                         FCC ")"
                         dB EOB
                         
-MSG_Tanq_lleno:                dB CR,LF,CR,LF
-                        FCC "Vaciando Tanque, Bomba Apagada"
+MSG_Tanq_lleno:         dB CR,LF,CR,LF
+                        FCC "Vaciando Tanque, Bomba Apagada "
                         dB CR,BS,CR,BS,CR
                         db EOB
 
-MSG_Alarma:                dB CR,LF,CR,LF
-                        FCC "Alarma: El Nivel Esta Bajo"
+MSG_Alarma:             dB CR,LF,CR,LF
+                        FCC "Alarma: El Nivel Esta Bajo     "
                         dB CR,BS,CR,BS,CR
                         db EOB
 
 MSG_Clear:              dB CR,LF,CR,LF
-                        FCC "                                  "
-                        dB CR,BS,CR,BS,CR
+                        FCC "                               "
+			dB CR,BS,CR,BS,CR
                         db EOB
 ;---------------------------- CAD (ATD) ---------------------------------
                                 org $1500
@@ -198,9 +198,9 @@ MSG_ptr:                  ds 2
 ;------------------------------ UC ---------------------------------
                                 org $1600
 ;------------------------------------------------------------------------
-tTimer_Tanqlleno:        EQU 5
-Est_Pres_UC:                ds 2
-Data_Terminal:                ds 2
+tTimer_Tanq_lleno:        EQU 5
+Est_Pres_UC:              ds 2
+Data_Terminal:            ds 2
 
 
 ;===============================================================================
@@ -247,7 +247,8 @@ Tabla_Timers_Base1S:
 
 Timer_LED_Testigo ds 1  ;Timer para parpadeo de led testigo
 TimerTerminal     ds 1
-Timer_Tanqlleno    ds 1
+Timer_Tanq_lleno  ds 1
+
 Fin_Base1S        dB $FF
 
 
@@ -426,13 +427,15 @@ Tarea_UC_Est1:
 
                         bset Banderas_1,Prcnt_90
                         bset Banderas_1,Mensage
-                        movb tTimer_Tanqlleno,Timer_Tanqlleno
+                        movb #tTimer_Tanq_lleno,Timer_Tanq_lleno
                         movw #MSG_Tanq_lleno,Data_Terminal
+                        bclr PORTE,$04
                         bra Fin_Tarea_UC_Est1
                         
 MenosDe15Porciento:     bset Banderas_1,Prcnt_15
                         bset Banderas_1,Mensage
                         movw #MSG_Alarma,Data_Terminal
+                        bset PORTE,$04
                         
 Fin_Tarea_UC_Est1:
                         movw #Tarea_UC_Est2,Est_Pres_UC
@@ -460,8 +463,11 @@ Fin_Tarea_UC_Est2:
 ;---------------------- Tarea UC Est3 ----------------------------------------
 Tarea_UC_Est3:
                         brset Banderas_1,Prcnt_15,Tst_30_Porciento
-                        
-                        tst Timer_Tanqlleno
+                        brset Banderas_1,Prcnt_90,Tst_90_Porciento
+                        bra Fin_Tarea_UC_Est3
+		        
+Tst_90_Porciento:
+                        tst Timer_Tanq_lleno
                         bne Fin_Tarea_UC_Est3
                         bra Clear_Terminal
 
@@ -471,7 +477,7 @@ Tst_30_Porciento:        ldaa Nivel
 
                         bclr Banderas_1,Prcnt_15
 
-Clear_Terminal:                bset Banderas_1,Mensage
+Clear_Terminal:         bset Banderas_1,Mensage
                         bset Banderas_1,Clear
                         movw #MSG_Clear,Data_Terminal
 
@@ -499,7 +505,6 @@ Tarea_Terminal_Est1:
                         movb #$00,SC1DRL
                         movw #Tarea_Terminal_Est2,Est_Pres_Terminal
                         bset PORTB,$01
-                        bset PORTE,$04
                         jsr Tarea_BIN_ASCII
                         
 Fin_Tarea_Terminal_Est1:
@@ -884,7 +889,7 @@ Calcula:
 
                         std NivelProm ;Guarda nivel Promedio
 
-                        ldy #$0014 ;Se carga valor maximo 20m
+                        ldy #20 ;Se carga valor maximo 20m
                         emul ;20 x (Potenciometro)
                         ldy #$0000
                         ldx #$03FF ;Valor_MAX_Potenciometro
@@ -892,11 +897,17 @@ Calcula:
 
                         pshy
                         tfr y,d
+
                         stab Nivel ;Guarda Nivel en metros (byte)
 
                         puly ;Trae Valor completo de Nivel
                         ldd #$0007 ;pi * (1.5)^2 =~ 7 m^2 (Area)
                         emul ; (~Area) x Nivel
+                        
+                        cmpb #91
+                        blo Continuar
+                        ldab #91
+Continuar:
                         stab Volumen 
 
                         rts

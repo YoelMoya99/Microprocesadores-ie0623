@@ -206,7 +206,7 @@ Fin_Base1S        dB $FF
 ;----------------------- Inicializacion de CAD (ATD) -------------------------
 
         movb #$80,ATD0CTL2 ;Enciende CAD, No AFFC
-        ldaa 160 ;Tiempo de Encendido, 10uS
+        ldaa #160 ;Tiempo de Encendido, 10uS
 
 Tiempo_De_Encendido:            ;Bucle para llegar a 10uS, tres ciclos de
         deca                    ;relog de 40MHz, 160 veces

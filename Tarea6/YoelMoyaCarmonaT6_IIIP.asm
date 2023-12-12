@@ -368,7 +368,7 @@ Tarea_Terminal_Est1:
                         ldaa SC1CR1                        ;Inicializa la
                         movb #$00,SC1DRL                   ;Transmision
                         movw #Tarea_Terminal_Est2,Est_Pres_Terminal
-                        jsr Tarea_BIN_ASCII                ;Convierte rsultados
+                        jsr BIN_ASCII                ;Convierte rsultados
                                                            ;a ascii
                         
 Fin_Tarea_Terminal_Est1:
@@ -439,7 +439,7 @@ Fin_Tarea_ATD_Est2:
 ;                               TAREA BIN ASCII
 ;*****************************************************************************
 
-Tarea_BIN_ASCII:
+BIN_ASCII:
                         ldaa Volumen
                         jsr BIN_BCD_General
 

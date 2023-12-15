@@ -41,6 +41,15 @@ tTimer100mS:          EQU 10    ;Base de tiempo de 100 mS (10 mS x 100)
 tTimer1S:             EQU 10    ;Base de tiempo de 1 segundo (100 mS x 10)
 
 
+;------ valores Generales ----------------------------------------
+
+MODO_LIBRE:                EQU $C0
+MODO_CONFIGURAR:        EQU $40
+MODO_COMPETENCIA:        EQU $C0
+
+FS_Pot:                        EQU $FF
+Max_Brillo:                EQU 100
+
 ;*******************************************************************
 ;                     Estructuras de Datos
 ;*******************************************************************
@@ -51,7 +60,7 @@ tTimer1S:             EQU 10    ;Base de tiempo de 1 segundo (100 mS x 10)
 MAX_TCL:               dB $06       ;Valor maximo del arreglo (1-6)
 Tecla:                 ds 1         ;Variable retorno de sr Leer Teclado
 Tecla_IN:              ds 1         ;Variable temp para validez de tecla pulsada
-Cont_TCL:              ds 1         ;Offset del arreglo resultado
+Cont_TCL:              ds 1         ;Ofset del arreglo resultado
 Patron:                ds 1         ;Patron de lectura/escritura del puerto A
 Est_Pres_TCL:          ds 2         ;Variable de estado para teclado
 Num_Array:             ds 9         ;Arreglo de resultado 
@@ -76,8 +85,8 @@ Brillo:                 ds 1
 
 tTimerDigito:           EQU 2
 MaxCountTicks:          EQU 100
-GUIONES:                EQU 10
-OFF:                        EQU 11
+GUIONES:                EQU $AA
+OFF:                    EQU $BB
 
 ;--------------- Sub Rutinas de Conversion -------------------------
                         org $1029
@@ -158,9 +167,9 @@ VelocMax:                EQU 95 ;km/h
 
 ;--------------------- Tarea Brillo --------------------------------
                         org $104A
-Est_Pres_Brillo:        ds 2
+Est_Pres_TBrillo:        ds 2
 
-tTimerBrillo:                EQU 2
+tTimerBrillo:           EQU 4
 MaskSCF:                EQU $80
 
 ;---------------------- Banderas -----------------------------------
@@ -319,18 +328,24 @@ Fin_Base1S        dB $FF
 ;===============================================================================
 
                                Org $2000
+;----------------- Leds y Y 7 Segmentos ----------------------------- 
 
         Bset DDRB,$FF     ;Habilitacion de puerto B como salida
-        Bset DDRJ,$02     ;Habilitacion de PB
-        BClr PTJ,$02
+        Bset DDRJ,$02     ;Habilitacion de puerto J.1 como salida
+        BClr PTJ,$02      ;Salida J.1 como cero
+
+;------------------- Led Testigo ---------------------------------------
 
         movb #$FF,DDRP    ;Habilitacion del led testigo tricolor
         bset PTP,$2F      ;Inicializacion del led testigo en azul
+
+;------------------- Teclado Matricial ----------------------------------
         
         movb #$F0,DDRA    ;Define el puerto A como salida y entrada p/teclado
         bset PUCR,$01     ;Activa las resistencias de pullup del puerto A
 
-;-----------------------------------------------------------------------------
+;-------------------- Base de Tiempos Output Compare 4 --------------------
+
         movb #$90,TSCR1   ;Timer enable & Fast flag clear all
         movb #$00,TSCR2   ;Prescaler de 16
 
@@ -342,7 +357,23 @@ Fin_Base1S        dB $FF
         ldd TCNT
         addd #480        ;Interrupcion configurada para 20uS
         std TC4
-;-----------------------------------------------------------------------------
+
+;----------------- Inicializacion ATD (Potenciometro) -----------------------
+
+        movb #$80,ATD0CTL2 ;Enciende ATD, No AFFC
+        ldaa #160          ;Tiempo encendido, 10uS
+
+Tiempo_Encendido:          ;Bucle para llegar a 10uS, tres ciclos de 
+        deca               ;relog de 48MHz, 160 veces
+        tsta
+        bne Tiempo_Encendido
+
+        movb #$10,ATD0CTL3 ;Dos muestras, no FIFO
+        movb #$B3,ATD0CTL4 ;SMPn = 01, 4 ciclos de sample
+                           ;SRES8 = 1, resoluc. 8 bits
+                              ;PRS = 19 = $13, 600kHz
+
+;------------------ Pantalla LCD e Inicializacion ----------------------------
 
         ;Inicializacion de la pantalla LCD, Hardware
         movb #$FF,DDRK
@@ -385,6 +416,7 @@ Dos_mS_Wait:
         tst Timer2mS
         bne Dos_mS_Wait
 
+
 ;===============================================================================
 ;                           PROGRAMA PRINCIPAL
 ;===============================================================================
@@ -396,19 +428,22 @@ Dos_mS_Wait:
         Movb #tTimerLDTst,Timer_LED_Testigo  ;inicia timer parpadeo led testigo
         Movb #tTimerDigito,TimerDigito  ;Inicia timer de digito pantallaMUX
 
-        movb #$FF,Tecla    ;Inicializa el valor de tecla
-        movb #$FF,Tecla_IN ;Inicializa el valor de tecla_in
-        movb #$00,Cont_TCL ;Inicializa offset en cero
-        movb #$00,Patron   ;Inicializa patron del lectura teclado
-        movb #1,Cont_Dig   ;Digito de multiplexacion
-        ;movb #BienvenidaLD,LEDS     ;Inicializa leds en pares
+        movb #$FF,Tecla      ;Inicializa el valor de tecla
+        movb #$FF,Tecla_IN   ;Inicializa el valor de tecla_in
+        movb #$00,Cont_TCL   ;Inicializa offset en cero
+        movb #$00,Patron     ;Inicializa patron del lectura teclado
+        movb #1,Cont_Dig     ;Digito de multiplexacion
+        movb #$00,LEDS       ;Inicializa leds en cero
+        movb #10,NumVueltas  ;Inicializa vueltas en 10
 
-        ldx #Num_Array     ;Inicializa el array con FF para los primeros
-        movb #$09,Cont_TCL ;9 valores.
-for:    movb #$FF,1,x+
-        dec Cont_TCL
-        bne for
-        movb #$00,Cont_TCL ;Fin de inicializacion de array
+;        ldx #Num_Array     ;Inicializa el array con FF para los primeros
+;        movb #$09,Cont_TCL ;9 valores.
+;for:    movb #$FF,1,x+
+;        dec Cont_TCL
+;        bne for
+;        movb #$00,Cont_TCL ;Fin de inicializacion de array
+
+        Jsr Borrar_NumArray
 
         Lds #$3BFF                          ;Define puntero de pila
         Cli                                 ;Habilita interrupciones
@@ -420,6 +455,9 @@ for:    movb #$FF,1,x+
         Movw #PantallaMUX_Est1,Est_Pres_PantallaMUX ;init est1 pantallamux
         ;Movw #TCM_Est1,Est_Pres_TCM
         Movw #TareaLCD_Est1,EstPres_TareaLCD
+        Movw #TareaBrillo_Est1,Est_Pres_TBrillo
+        Movw #TConfig_Est1,Est_Pres_TConfig
+
 
         movb #90,Brillo
         ;movw #Mensaje_BienvenidaL1,Msg_L1
@@ -428,23 +466,181 @@ for:    movb #$FF,1,x+
 
 Despachador_Tareas
 
-        ;brset Banderas_2,LCD_OK,No_Msg
-        ;Jsr Tarea_LCD
-No_Msg:
 
-        Jsr Tarea_Led_Testigo
-        ;Jsr Tarea_Conversion
-        ;Jsr Tarea_PantallaMUX
+        Jsr Tarea_Modo_Libre
+        Jsr Tarea_Configurar
+        ;Jsr Tarea_Modo_Competencia
+        Jsr Tarea_Brillo
         Jsr Tarea_Teclado
+        Jsr Tarea_Led_Testigo
         Jsr Tarea_Leer_PB1
         Jsr Tarea_Leer_PB2
+        Jsr Tarea_PantallaMUX
+
+        brset Banderas_2,LCD_OK,No_Msg
+        Jsr Tarea_LCD
+No_Msg:
+
+
+        ;Jsr Tarea_Conversion
         ;Jsr Tarea_TCM
         ;Jsr Tarea_Borra_TCL
 
         Bra Despachador_Tareas
 
 
+;******************************************************************************
+;                             TAREA MODO LIBRE
+;******************************************************************************
 
+Tarea_Modo_Libre:
+                        brclr PTH,$C0,Ejecutar_Modo_Libre
+                        bra Fin_Modo_Libre
+Ejecutar_Modo_Libre:
+                        brset LEDS,LDLibre,Modo_Libre_Ejecutado
+
+                        movb #LDLibre,LEDS
+                        
+                        movb #OFF,BCD1
+                        movb #OFF,BCD2
+
+                        jsr BCD_7Seg
+
+                        movw #Mensaje_Modo_Libre_L1,MSG_L1
+                        movw #Mensaje_Modo_Libre_L2,MSG_L2
+
+                        bclr Banderas_2,LCD_OK
+Fin_Modo_Libre:
+Modo_Libre_Ejecutado:
+                        rts 
+
+;******************************************************************************
+;                             TAREA CONFIGURAR
+;******************************************************************************
+
+Tarea_Configurar:
+                        ldx Est_Pres_TConfig
+                        jsr 0,x
+                        rts
+
+;---------------------- TConfig Est1 --------------------------------------
+
+TConfig_Est1:
+                        ldaa PTH
+                        anda #$C0
+                        cmpa #MODO_CONFIGURAR
+                        bne Fin_TConfig_Est1
+
+                        movw #Mensaje_Configurar_L1,MSG_L1
+                        movw #Mensaje_Configurar_L2,MSG_L2
+                        bclr Banderas_2,LCD_OK
+
+                        ldaa NumVueltas
+                        jsr BIN_BCD_MUXP
+                        movb BCD,BCD1
+
+                        movb #OFF,BCD2
+
+                        jsr BCD_7Seg
+                        movb #LDConfig,LEDS
+
+                        jsr Borrar_NumArray
+
+                        movw #TConfig_Est2,Est_Pres_TConfig
+Fin_TConfig_Est1:
+                        rts
+
+;---------------------- TConfig Est2 -----------------------------------------
+
+TConfig_Est2:
+                        ldaa PTH
+                        anda #$C0
+                        cmpa #MODO_CONFIGURAR
+                        bne Out_TConfig
+
+                        brclr Banderas_1,Array_OK,Fin_TConfig_Est2
+                        
+                        jsr BCD_BIN
+                
+                        ldaa ValorVueltas
+                        cmpa #MinNumVueltas
+                        blo TConfig_BArray
+                        cmpa #MaxNumVueltas
+                        bhi TConfig_BArray
+
+                        jsr BIN_BCD_MUXP
+                        movb BCD,BCD1
+                        movb #OFF,BCD2
+
+                        jsr BCD_7Seg
+                        ;movb #LDConfig,LEDS
+                        
+                        movb ValorVueltas,NumVueltas
+                        bra TConfig_BArray
+Out_TConfig:
+                        movw #TConfig_Est1,Est_Pres_TConfig
+                        movb #10,NumVueltas
+
+TConfig_BArray:
+                        jsr Borrar_NumArray
+
+Fin_TConfig_Est2:
+                        rts
+
+
+
+;******************************************************************************
+;                               TAREA BRILLO
+;******************************************************************************
+
+Tarea_Brillo:
+
+                        ldx Est_Pres_TBrillo
+                        jsr 0,x
+                        rts
+
+;---------------------- TareaBrillo Est1 ------------------------------------
+
+TareaBrillo_Est1:
+                        movb #tTimerBrillo,TimerBrillo
+                        movw #TareaBrillo_Est2,Est_Pres_TBrillo
+
+                        rts
+
+;---------------------- TareaBrillo Est2 ------------------------------------
+
+TareaBrillo_Est2:
+                        tst TimerBrillo
+                        bne Fin_TareaBrillo_Est2
+
+                        movb #$87,ATD0CTL5
+                        movw #TareaBrillo_Est3,Est_Pres_TBrillo
+
+Fin_TareaBrillo_Est2:
+                        rts
+
+;---------------------- TareaBrillo Est3 ------------------------------------
+
+TareaBrillo_Est3:
+                        brclr ATD0STAT0,MaskSCF,Fin_TareaBrillo_Est3
+
+                        ldd ADR00H   ;Primera Conversion
+                        addd ADR01H ;Segunda Conversion
+
+                        lsrd ;Division por 2, Promedio
+
+                        ldy #Max_Brillo
+                        emul ;Max_Brillo x Potenciometro
+                        ldx #FS_Pot
+                        ediv
+
+                        tfr y,d
+                        stab Brillo
+
+                        movw #TareaBrillo_Est1,Est_Pres_TBrillo
+
+Fin_TareaBrillo_Est3:
+                        rts
 
 
 ;******************************************************************************
@@ -959,8 +1155,7 @@ Fin_SendLCD_Est4:       rts
 ;                  SUB RUTINA GENERAL BCD_BIN
 ;*****************************************************************************
 
-        		;Falta preparar los datos...
-
+BCD_BIN:
 			ldx #Num_Array
 			ldaa 1,x+
 			ldab #16

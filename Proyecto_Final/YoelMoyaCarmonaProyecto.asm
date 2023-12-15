@@ -443,286 +443,9 @@ No_Msg:
 
         Bra Despachador_Tareas
 
-;******************************************************************************
-;                             TAREA LCD
-;******************************************************************************
-Tarea_LCD:
-                        ldx EstPres_TareaLCD
-                        jsr 0,x
-                        rts
-
-;---------------------------- TareaLCD Est1 ----------------------------------
-
-TareaLCD_Est1:
-                        bclr Banderas_2,FinSendLCD
-                        bclr Banderas_2,RS
-
-                        brset Banderas_2,Second_Line,Load_Second_Line
-Load_First_Line:
-                        movb #ADD_L1,CharLCD
-                        movw Msg_L1,Punt_LCD
-                        bra Load_TLCD_Est2
-Load_Second_LIne:
-                        movb #ADD_L2,CharLCD
-                        movw Msg_L2,Punt_LCD
-Load_TLCD_Est2:
-                        jsr Tarea_SendLCD
-
-                        movw #TareaLCD_Est2,EstPres_TareaLCD
-
-                        rts
-
-;---------------------- TareaLCD Est2 ----------------------------------------
-TareaLCD_Est2:
-                        brclr Banderas_2,FinSendLCD,Call_Send_LCD
-
-                        bclr Banderas_2,FinSendLCD
-                        bset Banderas_2,RS
-
-                        ldy Punt_LCD
-                        movb 1,y+,CharLCD
-                        sty Punt_LCD
-
-                        brset CharLCD,EOB,ToggleLine_EndMsg
-
-Call_Send_LCD:
-                        jsr Tarea_SendLCD
-                        bra Fin_TareaLCD_Est2
-
-ToggleLine_EndMsg:
-                        brset Banderas_2,Second_Line,EndMsg 
-                        
-                        bset Banderas_2,Second_Line
-                        bra Load_TareaLCD_Est1
-EndMsg:
-                        bclr Banderas_2,Second_Line
-                        bset Banderas_2,LCD_OK
-                        
-Load_TareaLCD_Est1:
-                        movw #TareaLCD_Est1,EstPres_TareaLCD
-
-Fin_TareaLCD_Est2:      rts
-
-;******************************************************************************
-;                            TAREA SEND LCD
-;******************************************************************************
-
-Tarea_SendLCD:
-                        ldx EstPres_SendLCD
-                        jsr 0,x
-                        rts
-
-;-------------------------- SendLCD_Est1 -------------------------------------
-
-SendLCD_Est1:
-                        ldaa #$F0
-                        anda CharLCD
-                        lsra
-                        lsra
-                        staa PORTK
-
-                        brclr Banderas_2,RS,ComandoLCD_Est1
-                        bset PORTK,$01
-                        bra No_ComandoLCD_Est1
-ComandoLCD_Est1:
-                        bclr PORTK,$01
-No_ComandoLCD_Est1:
-                        bset PORTK,$02
-                        movb #tTimer260uS,Timer260uS
-                        movw #SendLCD_Est2,EstPres_SendLCD
-
-Fin_SendLCD_Est1:       rts
-
-;----------------------- SendLCD_Est2 ----------------------------------------
-
-SendLCD_Est2:
-                        tst Timer260uS
-                        bne Fin_SendLCD_Est2
-
-                        bclr PORTK,$02
-
-                        ldaa #$0F
-                        anda CharLCD
-                        lsla
-                        lsla
-                        staa PORTK
-
-                        brclr Banderas_2,RS,ComandoLCD_Est2
-
-                        bset PORTK,$01
-                        bra No_ComandoLCD_Est2
-ComandoLCD_Est2:
-                        bclr PORTK,$01
-No_ComandoLCD_Est2:
-                        bset PORTK,$02
-                        movb #tTimer260uS,Timer260uS
-                        movw #SendLCD_Est3,EstPres_SendLCD
-
-Fin_SendLCD_Est2:
-                        rts
-
-;---------------------- SendLCD_Est3 -----------------------------------------
-
-SendLCD_Est3:
-                        tst Timer260uS
-                        bne Fin_SendLCD_Est3
-
-                        bclr PORTK,$02
-                        movb #tTimer40uS,Timer40uS
-                        movw #SendLCD_Est4,EstPres_SendLCD
-
-Fin_SendLCD_Est3:       rts
-
-;---------------------- SendLCD_Est4 -----------------------------------------
-
-SendLCD_Est4:
-                        tst Timer40uS
-                        bne Fin_SendLCD_Est4
-                        bset Banderas_2,FinSendLCD
-                        movw #SendLCD_Est1,EstPres_SendLCD
-                        
-Fin_SendLCD_Est4:       rts
-
-;******************************************************************************
-;                                   TAREA TCM
-;******************************************************************************
-;Tarea_TCM:
- ;                       ;ldx Est_Pres_TCM
- ;                       jsr 0,x
- ;                       rts
-
-;------------------------------ TCM Est1 -------------------------------------
-
-;TCM_Est1:
- ;                       movb #tMinutosTCM,MinutosTCM
- ;                       movb #tSegundosTCM,SegundosTCM
- ;                       movb #tMinutosTCM,BIN2
- ;                       movb #tSegundosTCM,BIN1
- ;
- ;                       brclr Banderas_1,ShortP,Fin_TCM_Est1
- ;                       movb #TransitorioLD,LEDS
- ;
- ;                       movw #Mensaje_TransitorioL1,Msg_L1
- ;                       movw #Mensaje_TransitorioL2,Msg_L2
- ;                       bclr Banderas_2,LCD_OK
- ;
- ;                       movw #TCM_Est2,Est_Pres_TCM
- ;
- ;
-;Fin_TCM_Est1:                rts
-
-;----------------------------- TCM Est2 --------------------------------------
-
-;TCM_Est2:
- ;                       movb MinutosTCM,BIN2
- ;                       ldaa SegundosTCM
- ;                       deca
- ;                       staa BIN1
- ;
- ;                       tst SegundosTCM
- ;                       bne Fin_TCM_Est2
- ;
- ;                       tst MinutosTCM
- ;                       bne Continue_TCM
-  ;
-  ;                      movb #tMinutosTCM,MinutosTCM
-  ;                      movb #tSegundosTCM,SegundosTCM
-  ;
-  ;                      movb #tMinutosTCM,BIN2
-  ;                      movb #tSegundosTCM,BIN1
-  ;
-  ;                      movb #BienvenidaLD,LEDS
-  ;                      movw #Mensaje_BienvenidaL1,Msg_L1
-  ;                      movw #Mensaje_BienvenidaL2,Msg_L2
-  ;                      bclr Banderas_2,LCD_OK
-  ;
-  ;                      movw #TCM_Est1,Est_Pres_TCM
-  ;                      bra Fin_TCM_Est2
-  ;
-;Continue_TCM:
-;                        dec MinutosTCM
-;                        movb #60,SegundosTCM
-;Fin_TCM_Est2:
-;                        rts
-;******************************************************************************
-;                               TAREA PANTALLA MUX
-;******************************************************************************
-
-Tarea_PantallaMUX:
-                        ldx Est_Pres_PantallaMUX
-                        jsr 0,x
-                        rts
-
-;------------------------------ PantallaMUX Est1 ---------------------------------
-
-PantallaMUX_Est1:  
-                        tst TimerDigito
-                        bne Fin_PantallaMUX_Est1
-                        
-                        movb #tTimerDigito,TimerDigito
-                        ldaa Cont_Dig
-                        
-                        cmpa #1
-                        beq Display_1
-
-                        cmpa #2
-                        beq Display_2
-
-                        cmpa #3
-                        beq Display_3
-
-                        cmpa #4
-                        beq Display_4
-Display_LEDS:
-                        bclr PTJ,$02
-                        movb LEDS,PORTB
-                        movb #01,Cont_Dig
-                        bra Cambio_Estado
-                        
-Display_1:
-                        bclr PTP,$01
-                        movb Dsp1,PORTB
-                        inc Cont_Dig
-                        bra Cambio_Estado
-Display_2:
-                        bclr PTP,$02
-                        movb Dsp2,PORTB
-                        bset PORTB,$80
-                        inc Cont_Dig
-                        bra Cambio_Estado
-Display_3:
-                        bclr PTP,$04
-                        movb Dsp3,PORTB
-                        bset PORTB,$80
-                        inc Cont_Dig
-                        bra Cambio_Estado
-Display_4:
-                        bclr PTP,$08
-                        movb Dsp4,PORTB
-                        inc Cont_Dig
-
-Cambio_Estado:
-                        movb #MaxCountTicks,Counter_Ticks
-                        movw #PantallaMUX_Est2,Est_Pres_PantallaMUX
-
-Fin_PantallaMUX_Est1:   rts
 
 
-;------------------------------ PantallaMUX Est2 ---------------------------------
 
-PantallaMUX_Est2:  
-                        ldaa #MaxCountTicks
-                        suba Counter_Ticks
-                        
-                        cmpa Brillo
-                        blo Fin_PantallaMUX_Est2
-                        
-                        bset PTP,$0F
-                        bset PTJ,$02
-
-                        movw #PantallaMUX_Est1,Est_Pres_PantallaMUX
-                        
-Fin_PantallaMUX_Est2:   rts
 
 ;******************************************************************************
 ;                               TAREA TECLADO
@@ -837,6 +560,32 @@ Reestablecer:           movw #Teclado_Est1,Est_Pres_TCL ;siempre se regresa al
                         bset Tecla_IN,#$FF              ;las variables de tecla
 
 Fin_Teclado_Est4:       rts
+
+;******************************************************************************
+;                        TAREA LED TESTIGO
+;******************************************************************************
+Tarea_Led_Testigo:
+                tst Timer_LED_Testigo
+                bne FinLedTest
+
+                brset PTP,$20,Green
+                brset PTP,$40,Blue
+Red:
+                bclr PTP,$10
+                bset PTP,$20
+                bra Init_Timer_LED
+Green:
+                bclr PTP,$20
+                bset PTP,$40
+                bra Init_Timer_LED
+Blue:
+                bclr PTP,$40
+                bset PTP,$10
+                
+Init_Timer_LED:
+                Movb #tTimerLDTst,Timer_LED_Testigo
+
+FinLedTest      Rts
 
 ;******************************************************************************
 ;                               TAREA LEER PB1
@@ -983,46 +732,227 @@ PB2est4_State1:          movw #LeerPB2_Est1,Est_Pres_LeerPB2
 PB2Est4_Retornar:        rts
 
 
-;*****************************************************************************
-;                               TAREA CONVERSION
-;*****************************************************************************
+;******************************************************************************
+;                               TAREA PANTALLA MUX
+;******************************************************************************
 
-;Tarea_Conversion:
-;                        ldaa BIN1
-;                        jsr BIN_BCD_MUXP
-;                        movb BCD,BCD1
-;
-;                        ldaa BIN2
-;                        jsr BIN_BCD_MUXP
-;                        movb BCD,BCD2
-;
-;                        jsr BCD_7Seg
-;
-;                        rts
+Tarea_PantallaMUX:
+                        ldx Est_Pres_PantallaMUX
+                        jsr 0,x
+                        rts
 
-;*****************************************************************************
-;                TAREA BORRA TCL (anterior TAREA LED PB)
-;*****************************************************************************
+;------------------------------ PantallaMUX Est1 ---------------------------------
 
-Tarea_Borra_TCL:
-                        BrSet Banderas_1,ShortP2,ON_LD
-                        BrSet Banderas_1,LongP2,OFF_LD
-                        Bra FIN_Led
-ON_LD:                  BClr Banderas_1,ShortP2
-                        Bset PORTB,$01
-                        Bra FIN_Led
-OFF_LD:                    BClr Banderas_1,LongP2
-                        BClr PORTB,$01
+PantallaMUX_Est1:  
+                        tst TimerDigito
+                        bne Fin_PantallaMUX_Est1
                         
-                        ldx #Num_Array      ;se utiliza el mismo ciclo
-                        movb #$09,Cont_TCL  ;implementado en el main, para
-forCLR:                 movb #$FF,1,x+      ;limpiar el arreglo. Y se agrega
-                        dec Cont_TCL        ;poner la bandera array en cero.
-                        bne forCLR
-                        movb #$00,Cont_TCL
-                        bclr Banderas_1,ARRAY_OK
+                        movb #tTimerDigito,TimerDigito
+                        ldaa Cont_Dig
+                        
+                        cmpa #1
+                        beq Display_1
 
-FIN_Led:                Rts
+                        cmpa #2
+                        beq Display_2
+
+                        cmpa #3
+                        beq Display_3
+
+                        cmpa #4
+                        beq Display_4
+Display_LEDS:
+                        bclr PTJ,$02
+                        movb LEDS,PORTB
+                        movb #01,Cont_Dig
+                        bra Cambio_Estado
+                        
+Display_1:
+                        bclr PTP,$01
+                        movb Dsp1,PORTB
+                        inc Cont_Dig
+                        bra Cambio_Estado
+Display_2:
+                        bclr PTP,$02
+                        movb Dsp2,PORTB
+                        bset PORTB,$80
+                        inc Cont_Dig
+                        bra Cambio_Estado
+Display_3:
+                        bclr PTP,$04
+                        movb Dsp3,PORTB
+                        bset PORTB,$80
+                        inc Cont_Dig
+                        bra Cambio_Estado
+Display_4:
+                        bclr PTP,$08
+                        movb Dsp4,PORTB
+                        inc Cont_Dig
+
+Cambio_Estado:
+                        movb #MaxCountTicks,Counter_Ticks
+                        movw #PantallaMUX_Est2,Est_Pres_PantallaMUX
+
+Fin_PantallaMUX_Est1:   rts
+
+
+;------------------------------ PantallaMUX Est2 ---------------------------------
+
+PantallaMUX_Est2:  
+                        ldaa #MaxCountTicks
+                        suba Counter_Ticks
+                        
+                        cmpa Brillo
+                        blo Fin_PantallaMUX_Est2
+                        
+                        bset PTP,$0F
+                        bset PTJ,$02
+
+                        movw #PantallaMUX_Est1,Est_Pres_PantallaMUX
+                        
+Fin_PantallaMUX_Est2:   rts
+
+
+;******************************************************************************
+;                             TAREA LCD
+;******************************************************************************
+Tarea_LCD:
+                        ldx EstPres_TareaLCD
+                        jsr 0,x
+                        rts
+
+;---------------------------- TareaLCD Est1 ----------------------------------
+
+TareaLCD_Est1:
+                        bclr Banderas_2,FinSendLCD
+                        bclr Banderas_2,RS
+
+                        brset Banderas_2,Second_Line,Load_Second_Line
+Load_First_Line:
+                        movb #ADD_L1,CharLCD
+                        movw Msg_L1,Punt_LCD
+                        bra Load_TLCD_Est2
+Load_Second_LIne:
+                        movb #ADD_L2,CharLCD
+                        movw Msg_L2,Punt_LCD
+Load_TLCD_Est2:
+                        jsr Tarea_SendLCD
+
+                        movw #TareaLCD_Est2,EstPres_TareaLCD
+
+                        rts
+
+;---------------------- TareaLCD Est2 ----------------------------------------
+TareaLCD_Est2:
+                        brclr Banderas_2,FinSendLCD,Call_Send_LCD
+
+                        bclr Banderas_2,FinSendLCD
+                        bset Banderas_2,RS
+
+                        ldy Punt_LCD
+                        movb 1,y+,CharLCD
+                        sty Punt_LCD
+
+                        brset CharLCD,EOB,ToggleLine_EndMsg
+
+Call_Send_LCD:
+                        jsr Tarea_SendLCD
+                        bra Fin_TareaLCD_Est2
+
+ToggleLine_EndMsg:
+                        brset Banderas_2,Second_Line,EndMsg 
+                        
+                        bset Banderas_2,Second_Line
+                        bra Load_TareaLCD_Est1
+EndMsg:
+                        bclr Banderas_2,Second_Line
+                        bset Banderas_2,LCD_OK
+                        
+Load_TareaLCD_Est1:
+                        movw #TareaLCD_Est1,EstPres_TareaLCD
+
+Fin_TareaLCD_Est2:      rts
+
+;******************************************************************************
+;                            TAREA SEND LCD
+;******************************************************************************
+
+Tarea_SendLCD:
+                        ldx EstPres_SendLCD
+                        jsr 0,x
+                        rts
+
+;-------------------------- SendLCD_Est1 -------------------------------------
+
+SendLCD_Est1:
+                        ldaa #$F0
+                        anda CharLCD
+                        lsra
+                        lsra
+                        staa PORTK
+
+                        brclr Banderas_2,RS,ComandoLCD_Est1
+                        bset PORTK,$01
+                        bra No_ComandoLCD_Est1
+ComandoLCD_Est1:
+                        bclr PORTK,$01
+No_ComandoLCD_Est1:
+                        bset PORTK,$02
+                        movb #tTimer260uS,Timer260uS
+                        movw #SendLCD_Est2,EstPres_SendLCD
+
+Fin_SendLCD_Est1:       rts
+
+;----------------------- SendLCD_Est2 ----------------------------------------
+
+SendLCD_Est2:
+                        tst Timer260uS
+                        bne Fin_SendLCD_Est2
+
+                        bclr PORTK,$02
+
+                        ldaa #$0F
+                        anda CharLCD
+                        lsla
+                        lsla
+                        staa PORTK
+
+                        brclr Banderas_2,RS,ComandoLCD_Est2
+
+                        bset PORTK,$01
+                        bra No_ComandoLCD_Est2
+ComandoLCD_Est2:
+                        bclr PORTK,$01
+No_ComandoLCD_Est2:
+                        bset PORTK,$02
+                        movb #tTimer260uS,Timer260uS
+                        movw #SendLCD_Est3,EstPres_SendLCD
+
+Fin_SendLCD_Est2:
+                        rts
+
+;---------------------- SendLCD_Est3 -----------------------------------------
+
+SendLCD_Est3:
+                        tst Timer260uS
+                        bne Fin_SendLCD_Est3
+
+                        bclr PORTK,$02
+                        movb #tTimer40uS,Timer40uS
+                        movw #SendLCD_Est4,EstPres_SendLCD
+
+Fin_SendLCD_Est3:       rts
+
+;---------------------- SendLCD_Est4 -----------------------------------------
+
+SendLCD_Est4:
+                        tst Timer40uS
+                        bne Fin_SendLCD_Est4
+                        bset Banderas_2,FinSendLCD
+                        movw #SendLCD_Est1,EstPres_SendLCD
+                        
+Fin_SendLCD_Est4:       rts
+
 
 ;*****************************************************************************
 ;                  SUB RUTINA GENERAL BIN BCD MUXP
@@ -1098,6 +1028,111 @@ Display34:
                 
 Fin_BCD_7Seg:                rts
 
+;******************************************************************************
+;                                   TAREA TCM
+;******************************************************************************
+;Tarea_TCM:
+ ;                       ;ldx Est_Pres_TCM
+ ;                       jsr 0,x
+ ;                       rts
+
+;------------------------------ TCM Est1 -------------------------------------
+
+;TCM_Est1:
+ ;                       movb #tMinutosTCM,MinutosTCM
+ ;                       movb #tSegundosTCM,SegundosTCM
+ ;                       movb #tMinutosTCM,BIN2
+ ;                       movb #tSegundosTCM,BIN1
+ ;
+ ;                       brclr Banderas_1,ShortP,Fin_TCM_Est1
+ ;                       movb #TransitorioLD,LEDS
+ ;
+ ;                       movw #Mensaje_TransitorioL1,Msg_L1
+ ;                       movw #Mensaje_TransitorioL2,Msg_L2
+ ;                       bclr Banderas_2,LCD_OK
+ ;
+ ;                       movw #TCM_Est2,Est_Pres_TCM
+ ;
+ ;
+;Fin_TCM_Est1:                rts
+
+;----------------------------- TCM Est2 --------------------------------------
+
+;TCM_Est2:
+ ;                       movb MinutosTCM,BIN2
+ ;                       ldaa SegundosTCM
+ ;                       deca
+ ;                       staa BIN1
+ ;
+ ;                       tst SegundosTCM
+ ;                       bne Fin_TCM_Est2
+ ;
+ ;                       tst MinutosTCM
+ ;                       bne Continue_TCM
+  ;
+  ;                      movb #tMinutosTCM,MinutosTCM
+  ;                      movb #tSegundosTCM,SegundosTCM
+  ;
+  ;                      movb #tMinutosTCM,BIN2
+  ;                      movb #tSegundosTCM,BIN1
+  ;
+  ;                      movb #BienvenidaLD,LEDS
+  ;                      movw #Mensaje_BienvenidaL1,Msg_L1
+  ;                      movw #Mensaje_BienvenidaL2,Msg_L2
+  ;                      bclr Banderas_2,LCD_OK
+  ;
+  ;                      movw #TCM_Est1,Est_Pres_TCM
+  ;                      bra Fin_TCM_Est2
+  ;
+;Continue_TCM:
+;                        dec MinutosTCM
+;                        movb #60,SegundosTCM
+;Fin_TCM_Est2:
+;                        rts
+
+
+;*****************************************************************************
+;                               TAREA CONVERSION
+;*****************************************************************************
+
+;Tarea_Conversion:
+;                        ldaa BIN1
+;                        jsr BIN_BCD_MUXP
+;                        movb BCD,BCD1
+;
+;                        ldaa BIN2
+;                        jsr BIN_BCD_MUXP
+;                        movb BCD,BCD2
+;
+;                        jsr BCD_7Seg
+;
+;                        rts
+
+;*****************************************************************************
+;                TAREA BORRA TCL (anterior TAREA LED PB)
+;*****************************************************************************
+
+Tarea_Borra_TCL:
+                        BrSet Banderas_1,ShortP1,ON_LD
+                        BrSet Banderas_1,LongP1,OFF_LD
+                        Bra FIN_Led
+ON_LD:                  BClr Banderas_1,ShortP1
+                        Bset PORTB,$01
+                        Bra FIN_Led
+OFF_LD:                    BClr Banderas_1,LongP1
+                        BClr PORTB,$01
+                        
+                        ldx #Num_Array      ;se utiliza el mismo ciclo
+                        movb #$09,Cont_TCL  ;implementado en el main, para
+forCLR:                 movb #$FF,1,x+      ;limpiar el arreglo. Y se agrega
+                        dec Cont_TCL        ;poner la bandera array en cero.
+                        bne forCLR
+                        movb #$00,Cont_TCL
+                        bclr Banderas_1,ARRAY_OK
+
+FIN_Led:                Rts
+
+
 ;*****************************************************************************
 ;                  SUB RUTINA GENERAL LEER TECLADO
 ;*****************************************************************************
@@ -1141,31 +1176,6 @@ No_Valor:
 
 End_Leer_Teclado:        rts
 
-;******************************************************************************
-;                        TAREA LED TESTIGO
-;******************************************************************************
-Tarea_Led_Testigo:
-                tst Timer_LED_Testigo
-                bne FinLedTest
-
-                brset PTP,$20,Green
-                brset PTP,$40,Blue
-Red:
-                bclr PTP,$10
-                bset PTP,$20
-                bra Init_Timer_LED
-Green:
-                bclr PTP,$20
-                bset PTP,$40
-                bra Init_Timer_LED
-Blue:
-                bclr PTP,$40
-                bset PTP,$10
-                
-Init_Timer_LED:
-                Movb #tTimerLDTst,Timer_LED_Testigo
-
-FinLedTest      Rts
 
 ;******************************************************************************
 ;                       SUBRUTINA DE ATENCION A RTI

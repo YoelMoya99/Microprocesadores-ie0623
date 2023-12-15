@@ -954,6 +954,93 @@ SendLCD_Est4:
 Fin_SendLCD_Est4:       rts
 
 
+
+;*****************************************************************************
+;                  SUB RUTINA GENERAL BCD_BIN
+;*****************************************************************************
+
+        		;Falta preparar los datos...
+
+			ldx #Num_Array
+			ldaa 1,x+
+			ldab #16
+			
+			mul ;Resultado R1:R2
+			
+			ldaa 0,x
+
+			aba
+			staa BCD
+
+                        ldx #BCD
+                        ldy #ValorVueltas
+                        
+                        Clr ValorVueltas ;No es nesesario del todo, agregado
+                                         ;para visualizar resultados.
+
+                        movb #5,Cont_BCD ;Inicializacion Contador Principal
+
+for_loop:               lsr 0,x ;Rotacion hacia la derecha de valor BCD y
+                        ;ror 1,x ;Num_BIN. Rotacion conjunta de 2 words,
+                        ror 0,y ;desplazando con cero entrante y rotanto con
+                        ;ror 1,y ;carry los 3 bytes restantes
+                        
+                        ;PARA LAS DOS DECADAS MAS SIGNIFICATIVAS
+                        ldd #$F00F ;Carga mascara para aislar DEC alta y baja
+                        anda 0,x   ;Aisla decada alta
+                        andb 0,x   ;Aisla decada baja
+
+                        ;RESTA 30 SI DEC ALTA MAYOR O IGUAL QUE 80
+                        cmpa #$80
+                        blo Hi_No_Sub_30
+                        suba #$30
+Hi_No_Sub_30:
+                        ;RESTA 3 SI DEC BAJA MAYOR O IGUAL QUE 8
+                        cmpb #$08
+                        blo Hi_No_Sub_03
+                        subb #$03
+Hi_No_Sub_03:
+                        aba ;Une las decadas filtradas
+                        staa 0,x ;guarda las decadas filtradas
+
+                        ;PARA LAS DOS DECADAS MENOS SIGNIFICATIVAS
+                        ldd #$F00F ;Carga mascara denuevo
+                        anda 1,x ;Aisla decada mas significativa
+                        andb 1,x ;Aisla decada menos significativa
+
+                        ;RESTA 30 SI LA DEC ALTA MAYOR O IGUAL QUE 80
+                        cmpa #$80
+                        blo Lo_No_Sub_30
+                        suba #$30
+Lo_No_Sub_30:
+                        ;RESTA 3 SI LA DEC BAJA MAYOR O IGUAL QUE 8
+                        cmpb #$08
+                        blo Lo_No_Sub_03
+                        subb #$03
+Lo_No_Sub_03:
+                        aba ;Une las decadas filtradas
+                        staa 1,x ;Guarda las decadas filtradas
+
+
+                        dec Cont_BCD ;Falta un desplazamiento con comparacion
+                        tst Cont_BCD ;menos. Si no hemos terminado, salte
+                        bne for_loop
+                        
+                        movb #3,Cont_BCD ;Carga segundo contador para los
+                                      ;desplazamientos sin comparacion
+
+                        ;DESPLAZAMIENTOS SIN COMPARACION:
+Optimizacion:           lsr 0,x
+                        ;ror 1,x
+                        ror 0,y
+                        ;ror 1,y
+                        
+                        dec Cont_BCD ;Falta un despl sin comparacion menos
+                        tst Cont_BCD ;Si no hemos terminado, salte
+                        bne Optimizacion
+
+			rts
+
 ;*****************************************************************************
 ;                  SUB RUTINA GENERAL BIN BCD MUXP
 ;*****************************************************************************

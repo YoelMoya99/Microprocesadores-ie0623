@@ -439,7 +439,7 @@ No_Msg:
         Jsr Tarea_Leer_PB1
         Jsr Tarea_Leer_PB2
         ;Jsr Tarea_TCM
-        Jsr Tarea_Borra_TCL
+        ;Jsr Tarea_Borra_TCL
 
         Bra Despachador_Tareas
 
@@ -1199,18 +1199,9 @@ Fin_BCD_7Seg:                rts
 ;                TAREA BORRA TCL (anterior TAREA LED PB)
 ;*****************************************************************************
 
-Tarea_Borra_TCL:
-                        BrSet Banderas_1,ShortP1,ON_LD
-                        BrSet Banderas_1,LongP1,OFF_LD
-                        Bra FIN_Led
-ON_LD:                  BClr Banderas_1,ShortP1
-                        Bset PORTB,$01
-                        Bra FIN_Led
-OFF_LD:                    BClr Banderas_1,LongP1
-                        BClr PORTB,$01
-                        
+Borrar_NumArray:   
                         ldx #Num_Array      ;se utiliza el mismo ciclo
-                        movb #$09,Cont_TCL  ;implementado en el main, para
+                        movb #$08,Cont_TCL  ;implementado en el main, para
 forCLR:                 movb #$FF,1,x+      ;limpiar el arreglo. Y se agrega
                         dec Cont_TCL        ;poner la bandera array en cero.
                         bne forCLR
@@ -1218,7 +1209,6 @@ forCLR:                 movb #$FF,1,x+      ;limpiar el arreglo. Y se agrega
                         bclr Banderas_1,ARRAY_OK
 
 FIN_Led:                Rts
-
 
 ;*****************************************************************************
 ;                  SUB RUTINA GENERAL LEER TECLADO

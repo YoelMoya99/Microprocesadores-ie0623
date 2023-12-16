@@ -1174,13 +1174,13 @@ Display_1:
 Display_2:
                         bclr PTP,$02
                         movb Dsp2,PORTB
-                        bset PORTB,$80
+                        ;bset PORTB,$80
                         inc Cont_Dig
                         bra Cambio_Estado
 Display_3:
                         bclr PTP,$04
                         movb Dsp3,PORTB
-                        bset PORTB,$80
+                        ;bset PORTB,$80
                         inc Cont_Dig
                         bra Cambio_Estado
 Display_4:
@@ -1359,7 +1359,7 @@ Fin_SendLCD_Est4:       rts
 ;*****************************************************************************
 
 BCD_BIN:
-        		ldx #Num_Array
+                	ldx #Num_Array
 			ldaa 1,x+
 			ldab #16
 			

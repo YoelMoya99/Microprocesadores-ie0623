@@ -463,6 +463,7 @@ Dos_mS_Wait:
         Movw #TareaLCD_Est1,EstPres_TareaLCD
         Movw #TareaBrillo_Est1,Est_Pres_TBrillo
         Movw #TConfig_Est1,Est_Pres_TConfig
+        Movw #TComp_Est1,Est_Pres_TComp
 
 
         movb #90,Brillo
@@ -475,7 +476,7 @@ Despachador_Tareas
 
         Jsr Tarea_Modo_Libre
         Jsr Tarea_Configurar
-        ;Jsr Tarea_Modo_Competencia
+        Jsr Tarea_Modo_Competencia
         Jsr Tarea_Brillo
         Jsr Tarea_Teclado
         Jsr Tarea_Led_Testigo
@@ -585,7 +586,7 @@ TConfig_Est2:
                         bra TConfig_BArray
 Out_TConfig:
                         movw #TConfig_Est1,Est_Pres_TConfig
-                        movb #10,NumVueltas
+                        movb #10,ValorVueltas
 
 TConfig_BArray:
                         jsr Borrar_NumArray
@@ -593,6 +594,185 @@ TConfig_BArray:
 Fin_TConfig_Est2:
                         rts
 
+;******************************************************************************
+;                          TAREA MODO COMPETENCIA
+;******************************************************************************
+
+Tarea_Modo_Competencia:
+                        ldx Est_Pres_TComp
+                        jsr 0,x
+                        rts
+
+;---------------------- TComp Est1 ------------------------------------------
+TComp_Est1:
+                        brset PTH,MODO_COMPETENCIA,Ejecutar_TComp_Est1
+                        bra Fin_TComp_Est1
+Ejecutar_TComp_Est1:
+
+                        ldaa Vueltas
+                        cmpa NumVueltas
+                        beq Pasa_TComp_Est3
+        
+                        movw #Mensaje_Inicial_L1,MSG_L1
+                        movw #Mensaje_Inicial_L2,MSG_L2
+                        bclr Banderas_2,LCD_OK
+                        
+                        movb #LDComp,LEDS
+                        movb #OFF,BCD1
+                        movb #OFF,BCD2
+
+                        jsr BCD_7Seg
+
+                        movw #TComp_Est2,Est_Pres_TComp
+                        bra Fin_TComp_Est1
+
+Pasa_TComp_Est3:
+                        movw #Mensaje_Fin_Comp_L1,MSG_L1
+                        movw #Mensaje_Fin_Comp_L2,MSG_L2
+                        bclr Banderas_2,LCD_OK
+                        movw #TComp_Est3,Est_Pres_TComp
+
+Fin_TComp_Est1:
+                        rts
+                        
+;---------------------- TComp Est2 -------------------------------------------
+TComp_Est2:
+                        brset PTH,MODO_COMPETENCIA,Ejecutar_TComp_Est2
+                        bra Out_TComp_Est2
+Ejecutar_TComp_Est2:
+                        brclr Banderas_1,ShortP1,Fin_TComp_Est2
+                        bclr Banderas_1,ShortP1
+                        
+                        movw #Mensaje_Calculando_L1,MSG_L1
+                        movw #Mensaje_Calculando_L2,MSG_L2
+                        bclr Banderas_2,LCD_OK
+
+                        movb #tTimerVel,TimerVel
+                        movw #TComp_Est4,Est_Pres_TComp
+                        bra Fin_TComp_Est2
+Out_TComp_Est2:
+                        movw #TComp_Est1,Est_Pres_TComp
+                        clr Vueltas
+Fin_TComp_Est2:
+                        rts
+
+;--------------------- TComp_Est3 --------------------------------------------
+TComp_Est3:
+                        brset PTH,MODO_COMPETENCIA,Ejecutar_TComp_Est3
+                        bra Out_TComp_Est3
+Ejecutar_TComp_Est3:
+                        brclr Banderas_1,LongP1,Fin_TComp_Est3
+                        bclr Banderas_1,LongP1
+                        
+Out_TComp_Est3:
+                        movw #TComp_Est1,Est_Pres_TComp
+                        clr Vueltas
+Fin_TComp_Est3:
+                        rts
+
+;--------------------- TComp Est4 --------------------------------------------
+
+TComp_Est4:
+                        brset PTH,MODO_COMPETENCIA,Ejecutar_TComp_Est4
+                        bra Out_TComp_Est4
+Ejecutar_TComp_Est4:
+                        brclr Banderas_1,ShortP2,Fin_TComp_Est4
+                        bclr Banderas_1,ShortP2
+                        
+                        jsr Calcula
+
+                        ldaa Veloc
+                        cmpa #VelocMax
+                        bhi  Fuera_De_Rango
+                        cmpa #VelocMin
+                        blo Fuera_De_Rango
+
+                        inc Vueltas
+                        movw #TComp_Est5,Est_Pres_TComp
+                        bra Fin_TComp_Est4
+
+Out_TComp_Est4:        
+                        movw #TComp_Est1,Est_Pres_TComp
+                        clr Vueltas
+                        bra Fin_TComp_Est4
+Fuera_De_Rango:
+                        
+                        movw #Mensaje_de_Alerta_L1,MSG_L1
+                        movw #Mensaje_de_Alerta_L2,MSG_L2
+                        bclr Banderas_2,LCD_OK
+                        
+                        movb #GUIONES,BCD1
+                        movb #GUIONES,BCD2
+
+                        jsr BCD_7Seg
+
+                        movb #tTimerError,TimerError
+                        movw #TComp_Est6,Est_Pres_TComp
+Fin_TComp_Est4:
+                        rts
+
+;---------------------- TComp Est5 ----------------------------------------
+TComp_Est5:
+                        brset PTH,MODO_COMPETENCIA,Ejecutar_TComp_Est5
+                        bra Out_TComp_Est5
+Ejecutar_TComp_Est5:
+
+                        tst TimerPant
+                        bne Fin_TComp_Est5
+                        
+                        movw #Mensaje_Competencia_L1,MSG_L1
+                        movw #Mensaje_Competencia_L2,MSG_L2
+                        bclr Banderas_2,LCD_OK
+
+                        ldaa Vueltas
+                        jsr BIN_BCD_MUXP
+                        movb BCD,BCD2
+
+                        ldaa Veloc
+                        jsr BIN_BCD_MUXP
+                        movb BCD,BCD1
+
+                        jsr BCD_7Seg
+
+                        movw #TComp_Est7,Est_Pres_TComp
+                        bra Fin_TComp_Est5
+Out_TComp_Est5:
+                        movw #TComp_Est1,Est_Pres_TComp
+                        clr Vueltas
+Fin_TComp_Est5:
+                        rts
+
+;---------------------- TComp Est 6 ----------------------------------------
+TComp_Est6:
+                        brset PTH,MODO_COMPETENCIA,Ejecutar_TComp_Est6
+
+                        clr Vueltas
+                        bra To_State1_TComp_Est6
+
+Ejecutar_TComp_Est6:
+                        tst TimerError
+                        bne Fin_TComp_Est6
+                                        
+To_State1_TComp_Est6:
+                        movw #TComp_Est1,Est_Pres_TComp
+Fin_TComp_Est6:
+                        rts
+
+;---------------------- TComp Est 7 -----------------------------------------
+TComp_Est7:
+                        brset PTH,MODO_COMPETENCIA,Ejecutar_TComp_Est7
+
+                        clr Vueltas
+                        bra To_State1_TComp_Est7
+
+Ejecutar_TComp_Est7:
+                        tst TimerFinPant
+                        bne Fin_TComp_Est7
+                                        
+To_State1_TComp_Est7:
+                        movw #TComp_Est1,Est_Pres_TComp
+Fin_TComp_Est7:
+                        rts
 
 
 ;******************************************************************************

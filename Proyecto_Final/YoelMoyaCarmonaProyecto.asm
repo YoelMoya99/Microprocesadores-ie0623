@@ -50,6 +50,12 @@ MODO_COMPETENCIA:        EQU $C0
 FS_Pot:                        EQU $FF
 Max_Brillo:                EQU 100
 
+CERO_8_BITS:               EQU $00
+CERO_16_BITS:              EQU $0000
+CONVERSOR_VELOC:           EQU 1980 ;55 * 36
+CONVERSOR_PANT_ON:         EQU 7200 ;200 * 36
+CONVERSOR_PANT_OFF:        EQU 10800 ;300 * 36
+INF:                       EQU $FF
 ;*******************************************************************
 ;                     Estructuras de Datos
 ;*******************************************************************
@@ -131,8 +137,8 @@ Est_Pres_LeerPB1:       ds 2         ;Variable de estado para Leer PB
 Est_Pres_LeerPB2:        ds 2
 
 PortPB:                 EQU PTH ;Etiqueta para el puerto H
-MaskPB1:                EQU $01 ;Mascara para push button PH0
-MaskPB2:                EQU $08 ;Mascara para push button PH3
+MaskPB1:                EQU $08 ;Mascara para push button PH0
+MaskPB2:                EQU $01 ;Mascara para push button PH3
 
 tSupRebPB:              EQU 10
 tShortP:                EQU 25
@@ -1156,7 +1162,7 @@ Fin_SendLCD_Est4:       rts
 ;*****************************************************************************
 
 BCD_BIN:
-			ldx #Num_Array
+        		ldx #Num_Array
 			ldaa 1,x+
 			ldab #16
 			
@@ -1234,6 +1240,52 @@ Optimizacion:           lsr 0,x
                         tst Cont_BCD ;Si no hemos terminado, salte
                         bne Optimizacion
 
+			rts
+
+;*****************************************************************************
+;                  SUB RUTINA GENERAL BCD_BIN
+;*****************************************************************************
+
+Calcula:
+			ldab #tTimerVel
+			subb TimerVel
+			cmpb #CERO_8_BITS
+			beq Velocidad_Infinita
+
+			stab DeltaT
+			
+			clra
+			tfr d,x
+			ldy #CERO_16_BITS
+			ldd #CONVERSOR_VELOC
+			ediv
+		
+			tfr y,d
+			stab Veloc
+
+			tfr d,x
+			ldy #CERO_16_BITS
+			ldd #CONVERSOR_PANT_ON
+			ediv
+
+			tfr y,d
+			stab TimerPant
+
+			ldab Veloc
+			clra
+			tfr d,x
+			ldy #CERO_16_BITS
+			ldd #CONVERSOR_PANT_OFF
+			ediv
+
+			tfr y,d
+			stab TimerFinPant
+			
+			bra Fin_Calcula
+			
+Velocidad_Infinita:
+			movb #INF,Veloc	
+Fin_Calcula:
 			rts
 
 ;*****************************************************************************

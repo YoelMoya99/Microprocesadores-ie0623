@@ -461,6 +461,7 @@ Dos_mS_Wait:
         Movw #PantallaMUX_Est1,Est_Pres_PantallaMUX ;init est1 pantallamux
         ;Movw #TCM_Est1,Est_Pres_TCM
         Movw #TareaLCD_Est1,EstPres_TareaLCD
+        ;Movw #SendLCD_Est1,EstPres_SendLCD
         Movw #TareaBrillo_Est1,Est_Pres_TBrillo
         Movw #TConfig_Est1,Est_Pres_TConfig
         Movw #TComp_Est1,Est_Pres_TComp
@@ -504,6 +505,7 @@ Tarea_Modo_Libre:
                         brclr PTH,$C0,Ejecutar_Modo_Libre
                         bra Fin_Modo_Libre
 Ejecutar_Modo_Libre:
+                        brclr Banderas_2,LCD_OK,Fin_Modo_Libre
                         brset LEDS,LDLibre,Modo_Libre_Ejecutado
 
                         movb #LDLibre,LEDS
@@ -515,9 +517,12 @@ Ejecutar_Modo_Libre:
 
                         movw #Mensaje_Modo_Libre_L1,MSG_L1
                         movw #Mensaje_Modo_Libre_L2,MSG_L2
-
                         bclr Banderas_2,LCD_OK
+                        
+                        bra Modo_Libre_Ejecutado
 Fin_Modo_Libre:
+
+
 Modo_Libre_Ejecutado:
                         rts 
 
@@ -536,7 +541,9 @@ TConfig_Est1:
                         ldaa PTH
                         anda #$C0
                         cmpa #MODO_CONFIGURAR
-                        bne Fin_TConfig_Est1
+                        bne Out_TConfig_Est1
+                        
+                        brclr Banderas_2,LCD_OK,Fin_TConfig_Est1
 
                         movw #Mensaje_Configurar_L1,MSG_L1
                         movw #Mensaje_Configurar_L2,MSG_L2
@@ -554,6 +561,9 @@ TConfig_Est1:
                         jsr Borrar_NumArray
 
                         movw #TConfig_Est2,Est_Pres_TConfig
+                        bra Fin_TConfig_Est1
+Out_TConfig_Est1:
+
 Fin_TConfig_Est1:
                         rts
 
@@ -563,7 +573,7 @@ TConfig_Est2:
                         ldaa PTH
                         anda #$C0
                         cmpa #MODO_CONFIGURAR
-                        bne Out_TConfig
+                        bne Out_TConfig_Est2
 
                         brclr Banderas_1,Array_OK,Fin_TConfig_Est2
                         
@@ -580,11 +590,10 @@ TConfig_Est2:
                         movb #OFF,BCD2
 
                         jsr BCD_7Seg
-                        ;movb #LDConfig,LEDS
                         
                         movb ValorVueltas,NumVueltas
                         bra TConfig_BArray
-Out_TConfig:
+Out_TConfig_Est2:
                         movw #TConfig_Est1,Est_Pres_TConfig
                         movb #10,ValorVueltas
 
@@ -606,8 +615,9 @@ Tarea_Modo_Competencia:
 ;---------------------- TComp Est1 ------------------------------------------
 TComp_Est1:
                         brset PTH,MODO_COMPETENCIA,Ejecutar_TComp_Est1
-                        bra Fin_TComp_Est1
+                        bra Out_TComp_Est1
 Ejecutar_TComp_Est1:
+                        brclr Banderas_2,LCD_OK,Fin_TComp_Est1
 
                         ldaa Vueltas
                         cmpa NumVueltas
@@ -630,7 +640,12 @@ Pasa_TComp_Est3:
                         movw #Mensaje_Fin_Comp_L1,MSG_L1
                         movw #Mensaje_Fin_Comp_L2,MSG_L2
                         bclr Banderas_2,LCD_OK
+                        
                         movw #TComp_Est3,Est_Pres_TComp
+                        bra Fin_TComp_Est1
+Out_TComp_Est1:
+
+                        ;bclr Banderas_2,LCD_OK
 
 Fin_TComp_Est1:
                         rts
@@ -747,6 +762,7 @@ TComp_Est6:
                         brset PTH,MODO_COMPETENCIA,Ejecutar_TComp_Est6
 
                         clr Vueltas
+
                         bra To_State1_TComp_Est6
 
 Ejecutar_TComp_Est6:
@@ -763,6 +779,7 @@ TComp_Est7:
                         brset PTH,MODO_COMPETENCIA,Ejecutar_TComp_Est7
 
                         clr Vueltas
+
                         bra To_State1_TComp_Est7
 
 Ejecutar_TComp_Est7:

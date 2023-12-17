@@ -40,6 +40,29 @@ tTimer10mS:           EQU 10    ;Base de tiempo de 10 mS (1 mS x 10)
 tTimer100mS:          EQU 10    ;Base de tiempo de 100 mS (10 mS x 100)
 tTimer1S:             EQU 10    ;Base de tiempo de 1 segundo (100 mS x 10)
 
+;---------------------- Inicializacion de Hardware -------------------------
+INIT_PORTB:		EQU $FF ;
+INIT_PORTJ:		EQU $02 ;
+SALIDA_PORTJ:		EQU $02 ;
+
+INIT_PORTP:		EQU $FF ;Valor para inicializar puerto P como salida
+SALIDA_PORTP:           EQU $2F ;
+
+INIT_PORTA:		EQU $F0 ;
+PULLUP_EN_A:		EQU $01 ;
+
+ENABLE_AND_FLAG:	EQU $90 ; 
+OC4_PRS:		EQU $00 ;
+TIMER_CHANNEL:		EQU $10 ;
+INTERRUPT_ENABLE:	EQU $10 ;
+TOGGLE_BIT:		EQU $01 ;
+
+ATD_ENABLE_AND_FLAG:	EQU $80 ;
+ESPERA_10uS:		EQU 160 ;
+MUESTRAS_Y_FIFO:	EQU $10 ;
+SAMPLE_8BITS_PRS:	EQU $B3 ;
+
+INIT_PORTK:		EQU $FF ;
 
 ;--------------------------- valores Para Modo -------------------------------
 
@@ -47,6 +70,12 @@ MODO_LIBRE:                EQU $C0
 MODO_CONFIGURAR:           EQU $40
 MODO_COMPETENCIA:          EQU $C0
 EVALUAR_MODO_MSK:	   EQU $C0
+
+;------------------------ Valores para LED Testigo ---------------------------
+
+RED_COLOR:		EQU $20 ;Mascara para poner color rojo en led
+GREEN_COLOR:		EQU $40 ;mascara para poner color verde en led
+BLUE_COLOR:		EQU $10 ;Mascara para poner color azul en led
 
 ;------------------------- Valores para Potenciometro ------------------------
 
@@ -280,14 +309,14 @@ Timer20uS           ds 1 ;Timer 20uS con base tiempo de interrupcion
 Timer40uS           ds 1 ;Timer de procesamiento de 1 byte por LCD 
 Timer260uS          ds 1 ;Tiempo de ancho de pulso del strobe para LCD
 
-Fin_BaseT:  db $FF
+Fin_BaseT:  db EOB
 
 Tabla_Timers_Base20uS:
 
 Timer1mS            ds 1 ;Timer 1mS para generar la base tiempo 1mS
 Counter_Ticks       ds 1 ;Tiempo de brillo de leds y 7 segmentos
 
-Fin_Base20uS:  db $FF
+Fin_Base20uS:  db EOB
 
 Tabla_Timers_Base1mS:
 
@@ -298,7 +327,7 @@ Timer_RebPB1       ds 1 ;Timer supresion rebotes Leer PB1
 Timer_RebPB2       ds 1 ;Timer supresion rebotes Leer PB2
 Timer_RebTCL       ds 1 ;Timer de supresion de rebotes teclado
 
-Fin_Base1mS:  dB $FF
+Fin_Base1mS:  dB EOB
 
 Tabla_Timers_Base10mS:
 
@@ -306,7 +335,7 @@ Timer100mS         ds 1 ;Timer para generar la base de tiempo de 100 mS
 Timer_SHP1         ds 1 ;Timer para short press sensor 1
 Timer_SHP2         ds 1 ;Timer para short press sensor 2
  
-Fin_Base10ms:  dB $FF
+Fin_Base10ms:  dB EOB
 
 Tabla_Timers_Base100mS:
 
@@ -317,7 +346,7 @@ TimerPant           ds 1 ;Tiempo desde sensor 2 hasta encendido de pantalla
 TimerFinPant        ds 1 ;Tiempo de apagado de pantalla
 TimerBrillo         ds 1 ;Tiempo de calculo de conversion de ATD para brillo
 
-Fin_Base100mS:  dB $FF
+Fin_Base100mS:  dB EOB
 
 Tabla_Timers_Base1S:
 
@@ -325,7 +354,7 @@ Timer_LP1          ds 1  ;Timer para long press1
 Timer_LP2          ds 1  ;Timer para long press2
 Timer_LED_Testigo  ds 1  ;Timer para parpadeo de led testigo
 
-Fin_Base1S:     dB $FF
+Fin_Base1S:     dB EOB
 
 ;===============================================================================
 ;                              CONFIGURACION DE HARDWARE
@@ -334,53 +363,53 @@ Fin_Base1S:     dB $FF
                                Org $2000
 ;----------------- Leds y Y 7 Segmentos ----------------------------- 
 
-        Bset DDRB,$FF     ;Habilitacion de puerto B como salida
-        Bset DDRJ,$02     ;Habilitacion de puerto J.1 como salida
-        BClr PTJ,$02      ;Salida J.1 como cero
+        Bset DDRB,INIT_PORTB     ;Habilitacion de puerto B como salida
+        Bset DDRJ,INIT_PORTJ     ;Habilitacion de puerto J.1 como salida
+        BClr PTJ,SALIDA_PORTJ      ;Salida J.1 como cero
 
 ;------------------- Led Testigo ---------------------------------------
 
-        movb #$FF,DDRP    ;Habilitacion del led testigo tricolor
-        bset PTP,$2F      ;Inicializacion del led testigo en azul
+        movb #INIT_PORTP,DDRP    ;Habilitacion del led testigo tricolor
+        bset PTP,SALIDA_PORTP    ;Inicializacion del led testigo en azul
 
 ;------------------- Teclado Matricial ----------------------------------
         
-        movb #$F0,DDRA    ;Define el puerto A como salida y entrada p/teclado
-        bset PUCR,$01     ;Activa las resistencias de pullup del puerto A
+        movb #INIT_PORTA,DDRA    ;Define el puerto A como salida y entrada p/teclado
+        bset PUCR,PULLUP_EN_A     ;Activa las resistencias de pullup del puerto A
 
 ;-------------------- Base de Tiempos Output Compare 4 --------------------
 
-        movb #$90,TSCR1   ;Timer enable & Fast flag clear all
-        movb #$00,TSCR2   ;Prescaler de 16
+        movb #ENABLE_AND_FLAG,TSCR1   ;Timer enable & Fast flag clear all
+        movb #OC4_PRS,TSCR2   ;Prescaler de 16
 
-        movb #$10,TIOS    ;Timer Input Output set enable canal4
-        movb #$10,TIE     ;Timer Interrutp enable canal4
+        movb #TIMER_CHANNEL,TIOS    ;Timer Input Output set enable canal4
+        movb #INTERRUPT_ENABLE,TIE     ;Timer Interrutp enable canal4
 
-        movb #$01,TCTL1   ;Toggle, bit de control canal4
+        movb #TOGGLE_BIT,TCTL1   ;Toggle, bit de control canal4
 
         ldd TCNT
-        addd #480        ;Interrupcion configurada para 20uS
+        addd #Carga_TC5        ;Interrupcion configurada para 20uS
         std TC4
 
 ;----------------- Inicializacion ATD (Potenciometro) -----------------------
 
-        movb #$80,ATD0CTL2 ;Enciende ATD, No AFFC
-        ldaa #160          ;Tiempo encendido, 10uS
+        movb #ATD_ENABLE_AND_FLAG,ATD0CTL2 ;Enciende ATD, No AFFC
+        ldaa #ESPERA_10uS          ;Tiempo encendido, 10uS
 
 Tiempo_Encendido:          ;Bucle para llegar a 10uS, tres ciclos de 
         deca               ;relog de 48MHz, 160 veces
         tsta
         bne Tiempo_Encendido
 
-        movb #$10,ATD0CTL3 ;Dos muestras, no FIFO
-        movb #$B3,ATD0CTL4 ;SMPn = 01, 4 ciclos de sample
+        movb #MUESTRAS_Y_FIFO,ATD0CTL3 ;Dos muestras, no FIFO
+        movb #SAMPLE_8BITS_PRS,ATD0CTL4 ;SMPn = 01, 4 ciclos de sample
                            ;SRES8 = 1, resoluc. 8 bits
                               ;PRS = 19 = $13, 600kHz
 
 ;------------------ Pantalla LCD e Inicializacion ----------------------------
 
         ;Inicializacion de la pantalla LCD, Hardware
-        movb #$FF,DDRK                       ;Define el puerto K como salida
+        movb #INIT_PORTK,DDRK                       ;Define el puerto K como salida
         movb #tTimer20uS,Timer20uS           ;Inicia timers para maq tiempos
         movb #tTimer1mS,Timer1mS
         movw #SendLCD_Est1,EstPres_SendLCD   ;inicia maq estados para enviar a LCD
@@ -396,7 +425,7 @@ Send_IniDsp:
         movb 1,y+,CharLCD
         sty Punt_LCD
         
-        brset CharLCD,$FF,Send_Clear
+        brset CharLCD,EOB,Send_Clear
         
  ; Bucle 2: para que la maquina que envia datos a LCD evolucione. Cuando
  ; Esta termina, se carga un siguiente dato en el bucle anterior. 

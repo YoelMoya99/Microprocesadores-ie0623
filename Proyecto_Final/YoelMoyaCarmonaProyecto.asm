@@ -41,48 +41,60 @@ tTimer100mS:          EQU 10    ;Base de tiempo de 100 mS (10 mS x 100)
 tTimer1S:             EQU 10    ;Base de tiempo de 1 segundo (100 mS x 10)
 
 ;---------------------- Inicializacion de Hardware -------------------------
-INIT_PORTB:		EQU $FF ;
-INIT_PORTJ:		EQU $02 ;
-SALIDA_PORTJ:		EQU $02 ;
+INIT_PORTB:                EQU $FF ;Inicia portb como salidas
+INIT_PORTJ:                EQU $02 ;Bit del puerto J para encender leds
+SALIDA_PORTJ:              EQU $02 ;Bit de salida para leds a tierra
 
-INIT_PORTP:		EQU $FF ;Valor para inicializar puerto P como salida
-SALIDA_PORTP:           EQU $2F ;
+INIT_PORTP:                EQU $FF ;Valor para inicializar puerto P como salida
+SALIDA_PORTP:              EQU $2F ;Enciende led azul y 7 seg
 
-INIT_PORTA:		EQU $F0 ;
-PULLUP_EN_A:		EQU $01 ;
+INIT_PORTA:                EQU $F0 ;Define salida y entrada para lectura teclado
+PULLUP_EN_A:               EQU $01 ;Define resistencias de pull up puerto A
 
-ENABLE_AND_FLAG:	EQU $90 ; 
-OC4_PRS:		EQU $00 ;
-TIMER_CHANNEL:		EQU $10 ;
-INTERRUPT_ENABLE:	EQU $10 ;
-TOGGLE_BIT:		EQU $01 ;
+ENABLE_AND_FLAG:           EQU $90 ;Enciente OC y clear flag
+OC4_PRS:                   EQU $00 ;Preescalador de 1
+TIMER_CHANNEL:             EQU $10 ;Define canal 4 para oc
+INTERRUPT_ENABLE:          EQU $10 ;Habilita interrupciones para OC4
+TOGGLE_BIT:                EQU $01 ;Define bit de toggle para canal 4
 
-ATD_ENABLE_AND_FLAG:	EQU $80 ;
-ESPERA_10uS:		EQU 160 ;
-MUESTRAS_Y_FIFO:	EQU $10 ;
-SAMPLE_8BITS_PRS:	EQU $B3 ;
+ATD_ENABLE_AND_FLAG:       EQU $80 ;Enciende ATD
+ESPERA_10uS:               EQU 160 ;Tiempo de espera de encendido
+MUESTRAS_Y_FIFO:           EQU $10 ;Define 2 muestras y no FIFO
+SAMPLE_8BITS_PRS:          EQU $B3 ;Define sample, resoluc, y prs para 600kHz
 
-INIT_PORTK:		EQU $FF ;
+INIT_PORTK:                EQU $FF ;Define puertoK como salida para LCD
+
+;------------------------- Valores generales ---------------------------------
+STACK_POINTER_INIT:        EQU $3BFF ;Stack pointer
+DEFAULT_VUELTAS:           EQU 10    ;Valor default para vueltas
+DEFAULT_BRILLO:            EQU 90    ;Init para brillo
+DEFAULT_CONT_DIG:          EQU 1     ;Init para contador de digito
+CLEAR_F:                   EQU $FF   ;Valor para borrado
+MAQUINA_ESTADOS:           EQU 0     ;Offset de maquinas de estados
+
+LOWER_MSK:                 EQU $0F   ;Mascara para aislar decada baja
+UPPER_MSK:                 EQU $F0   ;mascara para aislar decada alta
+UP_LOW_MSK:                EQU $F00F ;Mascara para aislar ambas decadas
 
 ;--------------------------- valores Para Modo -------------------------------
 
-MODO_LIBRE:                EQU $C0
-MODO_CONFIGURAR:           EQU $40
-MODO_COMPETENCIA:          EQU $C0
-EVALUAR_MODO_MSK:	   EQU $C0
+MODO_LIBRE:                EQU $C0  ;Mascara para modo libre
+MODO_CONFIGURAR:           EQU $40  ;Mascara para modo configurar
+MODO_COMPETENCIA:          EQU $C0  ;Mascara para modo competencia
+EVALUAR_MODO_MSK:          EQU $C0  ;Mascara para aislar modos
 
 ;------------------------ Valores para LED Testigo ---------------------------
 
-RED_COLOR:		EQU $20 ;Mascara para poner color rojo en led
-GREEN_COLOR:		EQU $40 ;mascara para poner color verde en led
-BLUE_COLOR:		EQU $10 ;Mascara para poner color azul en led
+RED_COLOR:                 EQU $20 ;Mascara para poner color rojo en led
+GREEN_COLOR:               EQU $40 ;mascara para poner color verde en led
+BLUE_COLOR:                EQU $10 ;Mascara para poner color azul en led
 
 ;------------------------- Valores para Potenciometro ------------------------
 
-FS_Pot:                    EQU $FF
-Max_Brillo:                EQU 100
+FS_Pot:                    EQU $FF   ;Maximo valor del potenciometro
+Max_Brillo:                EQU 100   ;Maximo valor del brillo
 
-;-------------------------- Valores para Tarea Calcula -----------------------
+;-------------------------- Valores para Tareas conversion --------------------
 
 CERO_8_BITS:               EQU $00   ;Valor poner en cero acumuladores A, B
 CERO_16_BITS:              EQU $0000 ;Valor poner en cero acumulador D,X,Y
@@ -94,6 +106,46 @@ CONVERSOR_PANT_OFF:        EQU 10800 ;300 * 36 Factor de conversion para
                                      ;obtener el tiempo de apagado de pantalla 
 INF:                       EQU $FF   ;Valor utilizado si el tiempo promedio es
                                      ;cero para evitar division por cero.
+
+OCHENTA:                   EQU $80   ;Comparador para DFCT3
+TREINTA:                   EQU $30   ;Numero a restar o sumar
+OCHO:                      EQU $08   ;Comparador para DFCT3
+TRES:                      EQU $03   ;Numero a restar o sumar
+DIV_16:                    EQU 16    ;Multiplicador para correr 4 espacios
+DFCT3_CONT:                EQU 5     ;Cantidad de desplazamientos
+DFCT3_OPT:                 EQU 3     ;desplazamientos sin comparacion
+
+CINCUENTA:                 EQU $50   ;Comparador para XS3
+CINCO:                     EQU $05   ;Comparador para XS3
+
+;------------------------- Valores para Teclado ------------------------------
+TCL_BORRAR:                EQU $0B ;tecla borrar
+TCL_ENTER:                 EQU $0E ;tecla enter
+
+UNO:                       EQU $01 ;Numero de fila 2
+DOS:                       EQU $02 ;Numero de Fila 3
+NUEVE:                     EQU $09 ;Numero maximo para offset de matriz
+COLUMNA_1:                 EQU $01 ;Mascara para columna1
+COLUMNA_2:                 EQU $02 ;mascara para columna2
+COLUMNA_3:                 EQU $04 ;mascara para columna3
+
+PATRON_LECTURA:            EQU $EF ;patron de lectura
+
+;------------------------ Valores para Pantalla MUX --------------------------
+DIGITO_1:                  EQU 1    ;Numero del digito a mostrar
+DIGITO_2:                  EQU 2    ;Numero del digito a mostrar
+DIGITO_3:                  EQU 3    ;Numero del digito a mostrar
+DIGITO_4:                  EQU 4    ;Numero del digito a mostrar
+
+MSK_DISPLAY_1:             EQU $01  ;Mascara para los display
+MSK_DISPLAY_2:             EQU $02  ;Mascara para los display
+MSK_DISPLAY_3:             EQU $04  ;Mascara para los display
+MSK_DISPLAY_4:             EQU $08  ;Mascara para los display
+MSK_DISPLAYS:              EQU $0F  ;Mascara para todos los display
+
+;------------------------- Valores para LCD ------------------------------
+MSK_LCD_EN:                EQU $02 ;Mascara para Enable
+MSK_LCD_RS:                EQU $01 ;Mascara para RS
 
 ;*******************************************************************
 ;                     Estructuras de Datos
@@ -468,18 +520,19 @@ Dos_mS_Wait:
         Movb #tTimerLDTst,Timer_LED_Testigo ;inicia timer parpadeo led testigo
         Movb #tTimerDigito,TimerDigito      ;Inicia timer de digito pantallaMUX
 
-        movb #$FF,Tecla      ;Inicializa el valor de tecla
-        movb #$FF,Tecla_IN   ;Inicializa el valor de tecla_in
-        movb #$00,Cont_TCL   ;Inicializa offset en cero
-        movb #$00,Patron     ;Inicializa patron del lectura teclado
-        movb #1,Cont_Dig     ;Digito de multiplexacion
-        movb #$00,LEDS       ;Inicializa leds en cero
-        movb #10,NumVueltas  ;Inicializa vueltas en 10
-        movb #90,Brillo
-        
+        movb #CLEAR_F,Tecla      ;Inicializa el valor de tecla
+        movb #CLEAR_F,Tecla_IN   ;Inicializa el valor de tecla_in
+        movb #CERO_8_BITS,Cont_TCL   ;Inicializa offset en cero
+        movb #CERO_8_BITS,Patron     ;Inicializa patron del lectura teclado
+        movb #DEFAULT_CONT_DIG,Cont_Dig     ;Digito de multiplexacion
+        movb #CERO_8_BITS,LEDS       ;Inicializa leds en cero
+        movb #DEFAULT_VUELTAS,NumVueltas  ;Inicializa vueltas en 10
+        movb #DEFAULT_BRILLO,Brillo
+        Clr Vueltas        
+
         Jsr Borrar_NumArray ;Inicializa el array en $FF
 
-        Lds #$3BFF     ;Define puntero de pila
+        Lds #STACK_POINTER_INIT     ;Define puntero de pila
         Cli            ;Habilita interrupciones
         Clr Banderas_1 ;Limpia las banderas
         Clr Banderas_2
@@ -520,11 +573,11 @@ No_Msg:
 
 Tarea_Modo_Libre:
                         brclr PTH,MODO_LIBRE,Ejecutar_Modo_Libre ;Switch en modo
-                        bra Fin_Modo_Libre			 ;libre?
+                        bra Fin_Modo_Libre                         ;libre?
 Ejecutar_Modo_Libre:
                         brclr Banderas_2,LCD_OK,Fin_Modo_Libre ;LCD Esta ocupado?
                         brset LEDS,LDLibre,Modo_Libre_Ejecutado ;Ya fue asignado
-								;Modo Libre antes?
+                                                                ;Modo Libre antes?
 
                         movb #LDLibre,LEDS ;Asigna patron de leds
                         
@@ -548,7 +601,7 @@ Modo_Libre_Ejecutado:
 
 Tarea_Configurar:
                         ldx Est_Pres_TConfig
-                        jsr 0,x
+                        jsr MAQUINA_ESTADOS,x
                         rts
 
 ;---------------------- TConfig Est1 --------------------------------------
@@ -575,7 +628,7 @@ TConfig_Est1:
                         movb #LDConfig,LEDS ;Asigna patron de leds del modo
 
                         jsr Borrar_NumArray ;Borra arreglo de numeros por si
-					    ;Ya fue asignado antes
+                                            ;Ya fue asignado antes
 
                         movw #TConfig_Est2,Est_Pres_TConfig
                         bra Fin_TConfig_Est1
@@ -626,7 +679,7 @@ Fin_TConfig_Est2:
 
 Tarea_Modo_Competencia:
                         ldx Est_Pres_TComp
-                        jsr 0,x
+                        jsr MAQUINA_ESTADOS,x
                         rts
 
 ;---------------------- TComp Est1 ------------------------------------------
@@ -813,7 +866,7 @@ Fin_TComp_Est7:
 Tarea_Brillo:
 
                         ldx Est_Pres_TBrillo
-                        jsr 0,x
+                        jsr MAQUINA_ESTADOS,x
                         rts
 
 ;---------------------- TareaBrillo Est1 ------------------------------------
@@ -869,7 +922,7 @@ Fin_TareaBrillo_Est3:
 
 Tarea_Teclado:
                         ldx Est_Pres_TCL
-                        jsr 0,x
+                        jsr MAQUINA_ESTADOS,x
                         rts
 
 ;------------------------------ Teclado Est1 ---------------------------------
@@ -932,26 +985,26 @@ Teclado_Est4:           ldaa Cont_TCL ;Revisa si ya se llego al valor maximo
 No_Long_Max:            tst Cont_TCL   ;si no se llego al val max, se prueba si
                         beq Array_Zero ;el valor es cero
 
-Array_No_Zero:          ldaa #$0E             ;Si no es cero, se revisa si la
+Array_No_Zero:          ldaa #TCL_ENTER       ;Si no es cero, se revisa si la
                         cmpa Tecla            ;tecla es enter o borrar y se
                         beq Borrar_Valor      ;decide terminar num array o
-                        ldaa #$0B             ;borrarlo segun lo que llega.
+                        ldaa #TCL_BORRAR      ;borrarlo segun lo que llega.
                         cmpa Tecla            ;Como se puede ver los valores
                         beq Finalizar_Array   ;que se evaluan estan alrevez,
                         bra Agregar_Valor     ;esto es intencional y explicado
                                               ;a detalle en el informe.
-Array_Zero:             ldaa #$0E
+Array_Zero:             ldaa #TCL_ENTER
                         cmpa Tecla            ;Si el array es cero, se deben
                         beq Reestablecer      ;ignorar las teclas borrar y
-                        ldaa #$0B             ;enter.
+                        ldaa #TCL_BORRAR      ;enter.
                         cmpa Tecla
                         beq Reestablecer
                         bra Agregar_Valor
 
-Long_Max:               ldaa #$0E            ;Si ya se llego a la longitud max
+Long_Max:               ldaa #TCL_ENTER      ;Si ya se llego a la longitud max
                         cmpa Tecla           ;las unicas teclas validas son
                         beq Borrar_Valor     ;borrar y enter, por lo que se
-                        ldaa #$0B            ;ignoran todas las demas
+                        ldaa #TCL_BORRAR     ;ignoran todas las demas
                         cmpa Tecla
                         beq Finalizar_Array
                         bra Reestablecer
@@ -965,15 +1018,15 @@ Agregar_Valor:          ldab Cont_TCL        ;Si en la evaluacion de teclas
 Borrar_Valor:           dec Cont_TCL         ;Si se tiene que borrar una tecla
                         ldab Cont_TCL        ;este bloque de codigo realiza
                         ldy #Num_Array       ;la accion decrementando el cont
-                        movb #$FF,b,y        ;y sustituyendo por el valor FF
+                        movb #CLEAR_F,b,y        ;y sustituyendo por el valor FF
                         bra Reestablecer
 
-Finalizar_Array:        bclr Cont_TCL,#$FF     ;Para finalizar arreglo se lev-
+Finalizar_Array:        bclr Cont_TCL,#CLEAR_F     ;Para finalizar arreglo se lev-
                         bset Banderas_1,ARRAY_OK ;anta bandera y borra offset
 
 Reestablecer:           movw #Teclado_Est1,Est_Pres_TCL ;siempre se regresa al
-                        bset Tecla,#$FF                 ;1st estado y se borran
-                        bset Tecla_IN,#$FF              ;las variables de tecla
+                        bset Tecla,#CLEAR_F                 ;1st estado y se borran
+                        bset Tecla_IN,#CLEAR_F              ;las variables de tecla
 
 Fin_Teclado_Est4:       rts
 
@@ -984,19 +1037,19 @@ Tarea_Led_Testigo:
                 tst Timer_LED_Testigo ;Ya paso un segundo?
                 bne FinLedTest
 
-                brset PTP,$20,Green ;Si Rojo, pase a verde
-                brset PTP,$40,Blue  ;Si verde pase a azul, si ninguno, pasa rojo
+                brset PTP,RED_COLOR,Green ;Si Rojo, pase a verde
+                brset PTP,GREEN_COLOR,Blue  ;Si verde pase a azul, si ninguno, pasa rojo
 Red:
-                bclr PTP,$10 ;Borra Azul
-                bset PTP,$20 ;Pone rojo
+                bclr PTP,BLUE_COLOR ;Borra Azul
+                bset PTP,RED_COLOR ;Pone rojo
                 bra Init_Timer_LED
 Green:
-                bclr PTP,$20 ;Borra rojo
-                bset PTP,$40 ;Pone verde
+                bclr PTP,RED_COLOR ;Borra rojo
+                bset PTP,GREEN_COLOR ;Pone verde
                 bra Init_Timer_LED
 Blue:
-                bclr PTP,$40 ;Borra verde
-                bset PTP,$10 ;Pone Azul
+                bclr PTP,GREEN_COLOR ;Borra verde
+                bset PTP,BLUE_COLOR ;Pone Azul
                 
 Init_Timer_LED:
                 Movb #tTimerLDTst,Timer_LED_Testigo
@@ -1009,7 +1062,7 @@ FinLedTest:      Rts
 
 Tarea_Leer_PB1:
                         ldx Est_Pres_LeerPB1
-                        jsr 0,x
+                        jsr MAQUINA_ESTADOS,x
                         rts
                         
 
@@ -1081,7 +1134,7 @@ PB1Est4_Retornar:        rts
 
 Tarea_Leer_PB2:
                         ldx Est_Pres_LeerPB2
-                        jsr 0,x
+                        jsr MAQUINA_ESTADOS,x
                         rts
                         
 
@@ -1154,7 +1207,7 @@ PB2Est4_Retornar:        rts
 
 Tarea_PantallaMUX:
                         ldx Est_Pres_PantallaMUX
-                        jsr 0,x
+                        jsr MAQUINA_ESTADOS,x
                         rts
 
 ;------------------------------ PantallaMUX Est1 ---------------------------------
@@ -1166,40 +1219,40 @@ PantallaMUX_Est1:
                         movb #tTimerDigito,TimerDigito ;Carga tiempo de prox digito
                         ldaa Cont_Dig                  ;Cual valor de digito se activa?
                         
-                        cmpa #1
+                        cmpa #DIGITO_1
                         beq Display_1  ;7 segmentos MSB?
 
-                        cmpa #2
+                        cmpa #DIGITO_2
                         beq Display_2  ;7 Segmentos 2nd MSB?
 
-                        cmpa #3
+                        cmpa #DIGITO_3
                         beq Display_3 ;7 Segmentos 2nd LSB?
 
-                        cmpa #4
+                        cmpa #DIGITO_4
                         beq Display_4 ;7 Segmentos LSB?
 Display_LEDS:
-                        bclr PTJ,$02      ;Habilita leds
+                        bclr PTJ,SALIDA_PORTJ      ;Habilita leds
                         movb LEDS,PORTB   ;Coloca patron de leds
-                        movb #01,Cont_Dig ;Reinicia contador de digito
+                        movb #DEFAULT_CONT_DIG,Cont_Dig ;Reinicia contador de digito
                         bra Cambio_Estado
                         
 Display_1:
-                        bclr PTP,$01     ;Habilita MSB 7 seg
+                        bclr PTP,MSK_DISPLAY_1     ;Habilita MSB 7 seg
                         movb Dsp1,PORTB  ;Coloca numero
                         inc Cont_Dig     ;pasa siguiente digito
                         bra Cambio_Estado
 Display_2:
-                        bclr PTP,$02     ;Habilita 2nd MSB 7 seg
+                        bclr PTP,MSK_DISPLAY_2     ;Habilita 2nd MSB 7 seg
                         movb Dsp2,PORTB  ;Coloca numero
                         inc Cont_Dig     ;Pasa siguiente digito
                         bra Cambio_Estado
 Display_3:
-                        bclr PTP,$04     ;Habilita 2nd LSB 7 seg
+                        bclr PTP,MSK_DISPLAY_3     ;Habilita 2nd LSB 7 seg
                         movb Dsp3,PORTB  ;Coloca numero
                         inc Cont_Dig     ;Pasa siguiente digito
                         bra Cambio_Estado
 Display_4:
-                        bclr PTP,$08     ;Habilita LSB 7 seg
+                        bclr PTP,MSK_DISPLAY_4     ;Habilita LSB 7 seg
                         movb Dsp4,PORTB  ;Coloca numero 
                         inc Cont_Dig     ;Pasa siguiente digito
 
@@ -1219,8 +1272,8 @@ PantallaMUX_Est2:
                         cmpa Brillo         ;Si ticks < brillo apaga todo
                         blo Fin_PantallaMUX_Est2
                         
-                        bset PTP,$0F  ;Apaga 7 segmentos
-                        bset PTJ,$02  ;Apaga leds
+                        bset PTP,MSK_DISPLAYS  ;Apaga 7 segmentos
+                        bset PTJ,SALIDA_PORTJ  ;Apaga leds
 
                         movw #PantallaMUX_Est1,Est_Pres_PantallaMUX
                         
@@ -1232,7 +1285,7 @@ Fin_PantallaMUX_Est2:   rts
 ;******************************************************************************
 Tarea_LCD:
                         ldx EstPres_TareaLCD
-                        jsr 0,x
+                        jsr MAQUINA_ESTADOS,x
                         rts
 
 ;---------------------------- TareaLCD Est1 ----------------------------------
@@ -1293,25 +1346,25 @@ Fin_TareaLCD_Est2:      rts
 
 Tarea_SendLCD:
                         ldx EstPres_SendLCD
-                        jsr 0,x
+                        jsr MAQUINA_ESTADOS,x
                         rts
 
 ;-------------------------- SendLCD_Est1 -------------------------------------
 
 SendLCD_Est1:
-                        ldaa #$F0     ;Aisla parte alta del byte
+                        ldaa #UPPER_MSK     ;Aisla parte alta del byte
                         anda CharLCD  ;Y lo posiciona en el puerto K
                         lsra
                         lsra
                         staa PORTK
 
                         brclr Banderas_2,RS,ComandoLCD_Est1 ;Es comando?
-                        bset PORTK,$01                      ;Avisar a LCD que es dato
+                        bset PORTK,MSK_LCD_RS                      ;Avisar a LCD que es dato
                         bra No_ComandoLCD_Est1
 ComandoLCD_Est1:
-                        bclr PORTK,$01                     ;Avisar a LCD que es comando
+                        bclr PORTK,MSK_LCD_RS                     ;Avisar a LCD que es comando
 No_ComandoLCD_Est1:
-                        bset PORTK,$02                     ;Iniciar pulso estroboscopico
+                        bset PORTK,MSK_LCD_EN                     ;Iniciar pulso estroboscopico
                         movb #tTimer260uS,Timer260uS       ;Iniciar ancho de pulso
                         movw #SendLCD_Est2,EstPres_SendLCD
 
@@ -1323,9 +1376,9 @@ SendLCD_Est2:
                         tst Timer260uS       ;Ya termino el tiempo del pulso?
                         bne Fin_SendLCD_Est2
 
-                        bclr PORTK,$02       ;Terminar el pulso
+                        bclr PORTK,MSK_LCD_EN       ;Terminar el pulso
 
-                        ldaa #$0F    ;Aisla parte baja del byte
+                        ldaa #LOWER_MSK    ;Aisla parte baja del byte
                         anda CharLCD ;Y lo posiciona para enviar a LCD
                         lsla
                         lsla
@@ -1333,12 +1386,12 @@ SendLCD_Est2:
 
                         brclr Banderas_2,RS,ComandoLCD_Est2 ;Es comando?
 
-                        bset PORTK,$01                      ;Avisar a LCD que es dato
+                        bset PORTK,MSK_LCD_RS                      ;Avisar a LCD que es dato
                         bra No_ComandoLCD_Est2
 ComandoLCD_Est2:
-                        bclr PORTK,$01                      ;Avisar a LCD que es comando
+                        bclr PORTK,MSK_LCD_RS                      ;Avisar a LCD que es comando
 No_ComandoLCD_Est2:
-                        bset PORTK,$02 			    ;Inicia pulso estroboscopico
+                        bset PORTK,MSK_LCD_EN 			    ;Inicia pulso estroboscopico
                         movb #tTimer260uS,Timer260uS        ;Inicia tiempo de pulso
                         movw #SendLCD_Est3,EstPres_SendLCD
 
@@ -1351,7 +1404,7 @@ SendLCD_Est3:
                         tst Timer260uS       ;Termino el ancho del pulso?
                         bne Fin_SendLCD_Est3
 
-                        bclr PORTK,$02              ;Terminar el pulso
+                        bclr PORTK,MSK_LCD_EN              ;Terminar el pulso
                         movb #tTimer40uS,Timer40uS  ;Iniciar tiempo de procesamiento
                         movw #SendLCD_Est4,EstPres_SendLCD
 
@@ -1376,7 +1429,7 @@ Fin_SendLCD_Est4:       rts
 BCD_BIN:
                 	ldx #Num_Array
 			ldaa 1,x+
-			ldab #16         ;mueve numero a decada superior
+			ldab #DIV_16         ;mueve numero a decada superior
 			
 			mul ;Resultado R1:R2 
 			
@@ -1391,62 +1444,39 @@ BCD_BIN:
                         Clr ValorVueltas ;No es nesesario del todo, agregado
                                          ;para visualizar resultados.
 
-                        movb #5,Cont_BCD ;Inicializacion Contador Principal
+                        movb #DFCT3_CONT,Cont_BCD ;Inicializacion Contador Principal
 
-for_loop:               lsr 0,x ;Rotacion hacia la derecha de valor BCD y
-                        ;ror 1,x ;Num_BIN. Rotacion conjunta de 2 words,
-                        ror 0,y ;desplazando con cero entrante y rotanto con
-                        ;ror 1,y ;carry los 3 bytes restantes
+for_loop:               lsr 0,x ;Rotacion hacia la derecha de valor BCD                     
+                        ror 0,y ;desplazando con cero entrante y rotanto
                         
-                        ;PARA LAS DOS DECADAS MAS SIGNIFICATIVAS
-                        ldd #$F00F ;Carga mascara para aislar DEC alta y baja
+                        ;PARA LA DOS DECADA MAS SIGNIFICATIVA
+                        ldd #UP_LOW_MSK ;Carga mascara para aislar DEC alta y baja
                         anda 0,x   ;Aisla decada alta
                         andb 0,x   ;Aisla decada baja
 
                         ;RESTA 30 SI DEC ALTA MAYOR O IGUAL QUE 80
-                        cmpa #$80
+                        cmpa #OCHENTA
                         blo Hi_No_Sub_30
-                        suba #$30
+                        suba #TREINTA
 Hi_No_Sub_30:
                         ;RESTA 3 SI DEC BAJA MAYOR O IGUAL QUE 8
-                        cmpb #$08
+                        cmpb #OCHO
                         blo Hi_No_Sub_03
-                        subb #$03
+                        subb #TRES
 Hi_No_Sub_03:
                         aba ;Une las decadas filtradas
                         staa 0,x ;guarda las decadas filtradas
-
-                        ;PARA LAS DOS DECADAS MENOS SIGNIFICATIVAS
-                        ldd #$F00F ;Carga mascara denuevo
-                        anda 1,x ;Aisla decada mas significativa
-                        andb 1,x ;Aisla decada menos significativa
-
-                        ;RESTA 30 SI LA DEC ALTA MAYOR O IGUAL QUE 80
-                        cmpa #$80
-                        blo Lo_No_Sub_30
-                        suba #$30
-Lo_No_Sub_30:
-                        ;RESTA 3 SI LA DEC BAJA MAYOR O IGUAL QUE 8
-                        cmpb #$08
-                        blo Lo_No_Sub_03
-                        subb #$03
-Lo_No_Sub_03:
-                        aba ;Une las decadas filtradas
-                        staa 1,x ;Guarda las decadas filtradas
-
 
                         dec Cont_BCD ;Falta un desplazamiento con comparacion
                         tst Cont_BCD ;menos. Si no hemos terminado, salte
                         bne for_loop
                         
-                        movb #3,Cont_BCD ;Carga segundo contador para los
+                        movb #DFCT3_OPT,Cont_BCD ;Carga segundo contador para los
                                       ;desplazamientos sin comparacion
 
                         ;DESPLAZAMIENTOS SIN COMPARACION:
 Optimizacion:           lsr 0,x
-                        ;ror 1,x
                         ror 0,y
-                        ;ror 1,y
                         
                         dec Cont_BCD ;Falta un despl sin comparacion menos
                         tst Cont_BCD ;Si no hemos terminado, salte
@@ -1504,8 +1534,8 @@ Fin_Calcula:
 ;                  SUB RUTINA GENERAL BIN BCD MUXP
 ;*****************************************************************************
 BIN_BCD_MUXP:
-                        bclr BCD,$FF        ;Limpia valor en BCD
-                        movb #$05,Cont_BCD  ;carga cuentas para optimizacion
+                        bclr BCD,CLEAR_F        ;Limpia valor en BCD
+                        movb #CINCO,Cont_BCD  ;carga cuentas para optimizacion
                         lsla                ;y rota dos veces sin probar
                         rol BCD
                         lsla
@@ -1519,17 +1549,17 @@ bin_BCD_loop:
                         rol BCD
                         psha
 
-                        ldd #$F00F         ;Aisla las decadaas alta y baja
+                        ldd #UP_LOW_MSK         ;Aisla las decadaas alta y baja
                         anda BCD
                         andb BCD
 
-                        cmpa #$50         ;Compara mayor o igual a 5
+                        cmpa #CINCUENTA         ;Compara mayor o igual a 5
                         blo no_add_30     ;para decada mas significativa
-                        adda #$30         ;Si si, suma 3
+                        adda #TREINTA         ;Si si, suma 3
 no_add_30:
-                        cmpb #$05         ;compara mayor o igual a 5
+                        cmpb #CINCO         ;compara mayor o igual a 5
                         blo no_add_03     ;Para decada Menos Significativa
-                        addb #$03         ;si si, suma 3
+                        addb #TRES         ;si si, suma 3
 no_add_03:
                         aba
                         staa BCD          ;Guarda resultado evaluado
@@ -1553,7 +1583,7 @@ BCD_7Seg:
                         ldy #BCD2     ;Carga direccion de BCD2
                         ldx #SEGMENT  ;Carga direccion de tabla de segmentos
 SegundoDisplay:
-                        ldd #$F00F    ;Aisla decada alta de BCDn
+                        ldd #UP_LOW_MSK    ;Aisla decada alta de BCDn
                         anda 0,y
                         lsra          ;Acomoda decada alta rotando
                         lsra
@@ -1580,11 +1610,11 @@ Fin_BCD_7Seg:                rts
 
 Borrar_NumArray:   
                         ldx #Num_Array      ;Carga direccion del array y en 
-                        movb #$08,Cont_TCL  ;un ciclo, Guarda valores $FF en
-forCLR:                 movb #$FF,1,x+      ;el mismo. Ademas tambien busca
+                        movb #OCHO,Cont_TCL  ;un ciclo, Guarda valores $FF en
+forCLR:                 movb #CLEAR_F,1,x+      ;el mismo. Ademas tambien busca
                         dec Cont_TCL        ;poner la bandera array en cero.
                         bne forCLR
-                        movb #$00,Cont_TCL
+                        movb #CERO_8_BITS,Cont_TCL
                         bclr Banderas_1,ARRAY_OK
 
 FIN_Led:                Rts
@@ -1594,8 +1624,8 @@ FIN_Led:                Rts
 ;*****************************************************************************
 
 Leer_Teclado:
-                        ldab #$00        ;Inicializa offset de filas
-                        movb #$EF,Patron ;Inicializa patron de lectura portA
+                        ldab #CERO_8_BITS        ;Inicializa offset de filas
+                        movb #PATRON_LECTURA,Patron ;Inicializa patron de lectura portA
 
 Next_Row:
                         movb Patron,PORTA ;Se carga patron en puerto A y se
@@ -1603,10 +1633,10 @@ Next_Row:
                         nop               ;causen problemas en la lectura de
                         nop               ;valores.
 
-                        brclr PORTA,$01,Column_1 ;Salta al valor leido en una
-                        brclr PORTA,$02,Column_2 ;columna de la respectiva fila
-                        brclr PORTA,$04,Column_3 ;y si no se lee ningun valor
-                        cmpb #$09                ;se revisa que no se encuentra
+                        brclr PORTA,COLUMNA_1,Column_1 ;Salta al valor leido en una
+                        brclr PORTA,COLUMNA_2,Column_2 ;columna de la respectiva fila
+                        brclr PORTA,COLUMNA_3,Column_3 ;y si no se lee ningun valor
+                        cmpb #NUEVE                ;se revisa que no se encuentra
                         beq No_Valor             ;en la ultima fila y
                         bra Prep_Next_Row        ;se cambia a la sigte fila
 Column_1:
@@ -1615,20 +1645,20 @@ Column_1:
                         bra End_Leer_Teclado ;encuentra.
 Column_2:
                         ldy #Teclas          ;se suma el valor del offset de la
-                        addb #$01            ;columna al de la fila sobre el
+                        addb #UNO            ;columna al de la fila sobre el
                         movb b,y,Tecla       ;mismo acumulador.
                         bra End_Leer_Teclado
 Column_3:
                         ldy #Teclas          ;solo se ocupa sumar el offset
-                        addb #$02            ;para las primeras tres columnas
+                        addb #DOS            ;para las primeras tres columnas
                         movb b,y,Tecla
                         bra End_Leer_Teclado
 Prep_Next_Row:
                         rol Patron   ;si no se encuentra un valor, se rota el
-                        addb #$03    ;patron y se incrementa en uno el offset
+                        addb #TRES    ;patron y se incrementa en uno el offset
                         bra Next_Row ;de la fila.
 No_Valor:
-                        movb #$FF,Tecla ;si no se lee nada, se retorna con FF
+                        movb #CLEAR_F,Tecla ;si no se lee nada, se retorna con FF
 
 End_Leer_Teclado:        rts
 
@@ -1640,7 +1670,7 @@ End_Leer_Teclado:        rts
 Maquina_Tiempos:
 
                 ldd TCNT
-                addd #480        ;Interrupcion configurada para 20uS
+                addd #Carga_TC5        ;Interrupcion configurada para 20uS
                 std TC4
 
                 ldx #Tabla_Timers_BaseT
@@ -1696,14 +1726,14 @@ Retornar:        Rti
 ;===============================================================================
 Decre_Timers:
                 ldaa 0,x
-                cmpa #$00
+                cmpa #CERO_8_BITS
                 bne Label2        ;Salta si es diferente de cero
 
                 inx
                 
                 bra Decre_Timers
 Label2:
-                cmpa #$FF
+                cmpa #EOB
                 beq FinDecreTimers
                 
                 dec 1,x+

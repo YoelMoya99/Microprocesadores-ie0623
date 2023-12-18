@@ -546,7 +546,7 @@ Dos_mS_Wait:
         Movw #TConfig_Est1,Est_Pres_TConfig         ;Inicializa est1 TConfig
         Movw #TComp_Est1,Est_Pres_TComp             ;inicializa est1 TComp
 
-        bclr Banderas_2,LCD_OK ;Clear para que las tareas Modo puedan
+        bset Banderas_2,LCD_OK ;Set para que las tareas Modo puedan
                                ;asignar mensajes a LCD en la primer pasada
 
 Despachador_Tareas
@@ -873,7 +873,7 @@ Tarea_Brillo:
 
 TareaBrillo_Est1:
                         movb #tTimerBrillo,TimerBrillo ;inicia muestras cada
-						       ;400mS
+        					       ;400mS
                         movw #TareaBrillo_Est2,Est_Pres_TBrillo
 
                         rts

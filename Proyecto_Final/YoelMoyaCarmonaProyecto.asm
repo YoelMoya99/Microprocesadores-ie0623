@@ -29,7 +29,7 @@
                                 Org $3E66 ;OutputCompare (OC) maquina de tiempos
                                 dw Maquina_Tiempos
 ;******************************************************************************
-;                       DECLARACION DE LAS ESTRUCTURAS DE DATOS
+;                       DEFINICION DE VALORES
 ;******************************************************************************
 
 ;--- Aqui se colocan los valores de carga para los timers de la aplicacion ----
@@ -148,7 +148,7 @@ MSK_LCD_EN:                EQU $02 ;Mascara para Enable
 MSK_LCD_RS:                EQU $01 ;Mascara para RS
 
 ;*******************************************************************
-;                     Estructuras de Datos
+;                     DEFINICION DE ESTRUCTURAS DE DATOS
 ;*******************************************************************
 
 ;--------------------- Tarea_Teclado -------------------------------
@@ -295,7 +295,7 @@ Second_Line:            EQU $08 ;Bandera para enviar la segunda linea a LCD
 ;---------------------- Generales ----------------------------------
                         org $1080
 
-LED_Testigo:            ds 1 ;Variable para led testigo
+LED_Testigo:            ds 1    ;Variable para led testigo
 
 tTimerLDTst:            EQU 1   ;Tiempo de parpadeo de LED testigo en segundos
 Carga_TC5:              EQU 480 ;Tiempo de carga del output compare
@@ -409,7 +409,7 @@ Timer_LED_Testigo  ds 1  ;Timer para parpadeo de led testigo
 Fin_Base1S:     dB EOB
 
 ;===============================================================================
-;                              CONFIGURACION DE HARDWARE
+;                       CONFIGURACION DE PERIFERICOS
 ;===============================================================================
 
                                Org $2000
@@ -417,7 +417,7 @@ Fin_Base1S:     dB EOB
 
         Bset DDRB,INIT_PORTB     ;Habilitacion de puerto B como salida
         Bset DDRJ,INIT_PORTJ     ;Habilitacion de puerto J.1 como salida
-        BClr PTJ,SALIDA_PORTJ      ;Salida J.1 como cero
+        BClr PTJ,SALIDA_PORTJ    ;Salida J.1 como cero
 
 ;------------------- Led Testigo ---------------------------------------
 
@@ -427,91 +427,47 @@ Fin_Base1S:     dB EOB
 ;------------------- Teclado Matricial ----------------------------------
         
         movb #INIT_PORTA,DDRA    ;Define el puerto A como salida y entrada p/teclado
-        bset PUCR,PULLUP_EN_A     ;Activa las resistencias de pullup del puerto A
+        bset PUCR,PULLUP_EN_A    ;Activa las resistencias de pullup del puerto A
 
 ;-------------------- Base de Tiempos Output Compare 4 --------------------
 
         movb #ENABLE_AND_FLAG,TSCR1   ;Timer enable & Fast flag clear all
-        movb #OC4_PRS,TSCR2   ;Prescaler de 16
+        movb #OC4_PRS,TSCR2           ;Prescaler de 16
 
-        movb #TIMER_CHANNEL,TIOS    ;Timer Input Output set enable canal4
-        movb #INTERRUPT_ENABLE,TIE     ;Timer Interrutp enable canal4
+        movb #TIMER_CHANNEL,TIOS      ;Timer Input Output set enable canal4
+        movb #INTERRUPT_ENABLE,TIE    ;Timer Interrutp enable canal4
 
-        movb #TOGGLE_BIT,TCTL1   ;Toggle, bit de control canal4
+        movb #TOGGLE_BIT,TCTL1        ;Toggle, bit de control canal4
 
         ldd TCNT
-        addd #Carga_TC5        ;Interrupcion configurada para 20uS
+        addd #Carga_TC5               ;Interrupcion configurada para 20uS
         std TC4
 
 ;----------------- Inicializacion ATD (Potenciometro) -----------------------
 
         movb #ATD_ENABLE_AND_FLAG,ATD0CTL2 ;Enciende ATD, No AFFC
-        ldaa #ESPERA_10uS          ;Tiempo encendido, 10uS
+        ldaa #ESPERA_10uS                  ;Tiempo encendido, 10uS
 
-Tiempo_Encendido:          ;Bucle para llegar a 10uS, tres ciclos de 
-        deca               ;relog de 48MHz, 160 veces
+Tiempo_Encendido:                          ;Bucle para llegar a 10uS, tres ciclos de
+        deca                               ;relog de 48MHz, 160 veces
         tsta
         bne Tiempo_Encendido
 
-        movb #MUESTRAS_Y_FIFO,ATD0CTL3 ;Dos muestras, no FIFO
+        movb #MUESTRAS_Y_FIFO,ATD0CTL3  ;Dos muestras, no FIFO
         movb #SAMPLE_8BITS_PRS,ATD0CTL4 ;SMPn = 01, 4 ciclos de sample
-                           ;SRES8 = 1, resoluc. 8 bits
-                              ;PRS = 19 = $13, 600kHz
+                                        ;SRES8 = 1, resoluc. 8 bits
+                                        ;PRS = 19 = $13, 600kHz
 
-;------------------ Pantalla LCD e Inicializacion ----------------------------
+;------------------ Pantalla LCD Hardware  ----------------------------
 
         ;Inicializacion de la pantalla LCD, Hardware
-        movb #INIT_PORTK,DDRK                       ;Define el puerto K como salida
-        movb #tTimer20uS,Timer20uS           ;Inicia timers para maq tiempos
-        movb #tTimer1mS,Timer1mS
-        movw #SendLCD_Est1,EstPres_SendLCD   ;inicia maq estados para enviar a LCD
-        movw #IniDsp,Punt_LCD                ;Inicia puntero de tabla de init
-        ldy Punt_LCD
-        Clr Banderas_2                       ;Borra banderas a usar por LCD
-        Cli                                      ;Enciende maq tiempos
-
- ; Bucle 1: Carga datos de la tabla e incrementa punteros. Revisa si
- ; ya se llego al final de la tabla antes de enviarlo a LCD
-Send_IniDsp:
-        ldy Punt_LCD
-        movb 1,y+,CharLCD
-        sty Punt_LCD
-        
-        brset CharLCD,EOB,Send_Clear
-        
- ; Bucle 2: para que la maquina que envia datos a LCD evolucione. Cuando
- ; Esta termina, se carga un siguiente dato en el bucle anterior. 
-Loop1_Tarea_SendLCD:
-        jsr Tarea_SendLCD
-        
-        brclr Banderas_2,FinSendLCD,Loop1_Tarea_SendLCD
-        
-        bclr Banderas_2,FinSendLCD
-        bra Send_IniDsp
-
- ; Bucle 3: Una vez que se termina de enviar la tabla de datos de init
- ; Se realiza el clear de la pantalla, donde se debe esperar 2mS
-Send_Clear:
-        movb #Clear_LCD,CharLCD
-        
-Loop2_Tarea_SendLCD:
-
-        jsr Tarea_SendLCD
-        
-        brclr Banderas_2,FinSendLCD,Loop2_Tarea_SendLCD
-        
-        bclr Banderas_2,FinSendLCD
-        movb #tTimer2mS,Timer2mS
-
- ;Tiempo de espera para que LCD procese el clear:        
-Dos_mS_Wait:
-        tst Timer2mS
-        bne Dos_mS_Wait
-
+        movb #INIT_PORTK,DDRK          ;Define el puerto K como salida
 
 ;===============================================================================
-;                           PROGRAMA PRINCIPAL
+;                   INICIALIZACION DE ESTRUCTURAS DE DATOS
 ;===============================================================================
+
+;--------------------------- TIMERS MAQUINA TIEMPOS ------------------------
         Movb #tTimer20uS,Timer20uS          ;Inicia Base tiempos de Maq Tiempos
         Movb #tTimer1mS,Timer1mS            ;Inicia base tiempos de 1 mS
         Movb #tTimer10mS,Timer10mS          ;Inicia los timers de bases de tiempo
@@ -520,22 +476,32 @@ Dos_mS_Wait:
         Movb #tTimerLDTst,Timer_LED_Testigo ;inicia timer parpadeo led testigo
         Movb #tTimerDigito,TimerDigito      ;Inicia timer de digito pantallaMUX
 
-        movb #CLEAR_F,Tecla      ;Inicializa el valor de tecla
-        movb #CLEAR_F,Tecla_IN   ;Inicializa el valor de tecla_in
-        movb #CERO_8_BITS,Cont_TCL   ;Inicializa offset en cero
-        movb #CERO_8_BITS,Patron     ;Inicializa patron del lectura teclado
+;--------------------------- TECLADO ------------------------
+        movb #CLEAR_F,Tecla           ;Inicializa el valor de tecla
+        movb #CLEAR_F,Tecla_IN        ;Inicializa el valor de tecla_in
+        movb #CERO_8_BITS,Cont_TCL    ;Inicializa offset en cero
+        movb #CERO_8_BITS,Patron      ;Inicializa patron del lectura teclado
+        Jsr Borrar_NumArray           ;Inicializa el array en $FF
+        
+;--------------------------- PANTALLA MULTIPLEXADA ------------------------
         movb #DEFAULT_CONT_DIG,Cont_Dig     ;Digito de multiplexacion
-        movb #CERO_8_BITS,LEDS       ;Inicializa leds en cero
+        movb #CERO_8_BITS,LEDS              ;Inicializa leds en cero
+        
+;--------------------------- TAREAS DE MODO ------------------------
         movb #DEFAULT_VUELTAS,NumVueltas  ;Inicializa vueltas en 10
+        Clr Vueltas
+;--------------------------- TAREA BRILLO ------------------------
         movb #DEFAULT_BRILLO,Brillo
-        Clr Vueltas        
 
-        Jsr Borrar_NumArray ;Inicializa el array en $FF
-
+;--------------------------- GENERALES ------------------------
         Lds #STACK_POINTER_INIT     ;Define puntero de pila
-        Cli            ;Habilita interrupciones
-        Clr Banderas_1 ;Limpia las banderas
+        Cli                         ;Habilita interrupciones
+        Clr Banderas_1              ;Limpia las banderas
         Clr Banderas_2
+
+;===============================================================================
+;                   INICIALIZACION DE MAQUINAS ESTADO
+;===============================================================================
 
         Movw #LeerPB1_Est1,Est_Pres_LeerPB1         ;Inicializa est1 LeerPB1
         Movw #LeerPB2_Est1,Est_Pres_LeerPB2         ;Inicializa est1 LeerPB2
@@ -545,9 +511,54 @@ Dos_mS_Wait:
         Movw #TareaBrillo_Est1,Est_Pres_TBrillo     ;Inicializa est1 TBrillo
         Movw #TConfig_Est1,Est_Pres_TConfig         ;Inicializa est1 TConfig
         Movw #TComp_Est1,Est_Pres_TComp             ;inicializa est1 TComp
+        movw #SendLCD_Est1,EstPres_SendLCD          ;inicia maq estados para enviar a LCD
+
+;----------------- INICIALIZACION LCD ----------------------------------------
+        movw #IniDsp,Punt_LCD                ;Inicia puntero de tabla de init
+        ldy Punt_LCD
+
+ ; Bucle 1: Carga datos de la tabla e incrementa punteros. Revisa si
+ ; ya se llego al final de la tabla antes de enviarlo a LCD
+Send_IniDsp:
+        ldy Punt_LCD
+        movb 1,y+,CharLCD
+        sty Punt_LCD
+
+        brset CharLCD,EOB,Send_Clear
+
+ ; Bucle 2: para que la maquina que envia datos a LCD evolucione. Cuando
+ ; Esta termina, se carga un siguiente dato en el bucle anterior.
+Loop1_Tarea_SendLCD:
+        jsr Tarea_SendLCD
+
+        brclr Banderas_2,FinSendLCD,Loop1_Tarea_SendLCD
+
+        bclr Banderas_2,FinSendLCD
+        bra Send_IniDsp
+
+ ; Bucle 3: Una vez que se termina de enviar la tabla de datos de init
+ ; Se realiza el clear de la pantalla, donde se debe esperar 2mS
+Send_Clear:
+        movb #Clear_LCD,CharLCD
+
+Loop2_Tarea_SendLCD:
+
+        jsr Tarea_SendLCD
+
+        brclr Banderas_2,FinSendLCD,Loop2_Tarea_SendLCD
+
+        bclr Banderas_2,FinSendLCD
+        movb #tTimer2mS,Timer2mS
+
+ ;Tiempo de espera para que LCD procese el clear:
+Dos_mS_Wait:
+        tst Timer2mS
+        bne Dos_mS_Wait
 
         bset Banderas_2,LCD_OK ;Set para que las tareas Modo puedan
                                ;asignar mensajes a LCD en la primer pasada
+                               
+;--------------------- DESPACHADOR DE TAREAS -------------------------------
 
 Despachador_Tareas
 
@@ -873,7 +884,7 @@ Tarea_Brillo:
 
 TareaBrillo_Est1:
                         movb #tTimerBrillo,TimerBrillo ;inicia muestras cada
-        					       ;400mS
+                				       ;400mS
                         movw #TareaBrillo_Est2,Est_Pres_TBrillo
 
                         rts
@@ -1605,7 +1616,7 @@ Display34:
 Fin_BCD_7Seg:                rts
 
 ;*****************************************************************************
-;                TAREA BORRA TCL (anterior TAREA LED PB)
+;                       BORRAR NUM ARRAY
 ;*****************************************************************************
 
 Borrar_NumArray:   
